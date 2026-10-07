@@ -1,13 +1,13 @@
 <!doctype html>
 <!-- SPDX-License-Identifier: GPL-3.0-only
      Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
-     FoMni: Felucca's installer page (web/index_pkg.html, by way of X0X), branded for FoMni, English first.
+     FoMni-1: Felucca's installer page (web/index_pkg.html, by way of X0X), branded for FoMni-1, English first.
      tools/make_pages.py inlines fm1pkg.js and fm1ota.js and the package's metadata. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FoMni installer</title>
+<title>FoMni-1 installer</title>
 <style>
   :root { --bg: #faf4e8; --fg: #48392f; --dim: #8a7764; --accent: #e0683a; }
   @media (prefers-color-scheme: dark) {
@@ -34,7 +34,7 @@
 <body>
 <main>
   <button class="lang" id="lang"></button>
-  <h1>Install FoMni</h1>
+  <h1>Install FoMni-1</h1>
   <p data-t="intro"></p>
   <p data-t="warn"></p>
   <p class="small" data-t="direct"></p>
@@ -56,7 +56,7 @@
   </ol>
   <p><button id="stockgo" disabled data-t="stockinstall"></button></p>
   <p><a href="../" style="color:inherit" data-t="manual"></a></p>
-  <p class="small">FoMni is built on Felucca by Leo Kuroshita (@kurogedelic), <a href="https://hugelton.com" target="_blank" rel="noopener" style="color:inherit">Hügelton Instruments</a>,
+  <p class="small">FoMni-1 is built on Felucca by Leo Kuroshita (@kurogedelic), <a href="https://hugelton.com" target="_blank" rel="noopener" style="color:inherit">Hügelton Instruments</a>,
     by way of X0X, with the rhythms, waves and sounds of Jan125's Chordian (CC0).<br>
     Fonts: Barlow Semi Condensed (SIL OFL 1.1). Omnichord is a trademark of Suzuki; M-VAVE and FM-1 are trademarks of their respective owners.<br>
     <span data-t="license"></span> <a href="https://github.com/charlesvestal/fm1-omnichord" target="_blank" rel="noopener" style="color:inherit">github.com/charlesvestal/fm1-omnichord</a></p>
@@ -69,14 +69,14 @@ const TEXT = {
     intro: "FM-1 を USB で接続してください。（Chrome か Edge で使えます）",
     warn: "書き込み中は USB を抜かないでください。",
     install: "インストール", other: "English",
-    manual: "FoMni のページへ",
+    manual: "FoMni-1 のページへ",
     direct: "USB ケーブルはパソコンに直接つないでください。Probe や Transporter などの機材は不要です。",
     brick: "万一 FM-1 が起動しなくなった場合は、Mac から標準ファームウェアに戻せます:",
     bricklink: "起動しない FM-1 の復旧（英語）",
     beta: "これはベータ版で、不安定な場合があります。このカスタムファームウェアを使ったことで FM-1 が壊れたり不具合が起きたりしても、作者は一切の責任を負いません。自己責任でお使いください。",
     back: "公式ファームウェアに戻すには、このページ下の「純正ファームウェアに戻す」か、M-VAVE 公式のアップデーター M-UPGRADE（Downloads → PC Software → M-UPGRADE）を使います。",
     stockh: "純正ファームウェアに戻す",
-    stockwhy: "M-VAVE の FM-1 V15 を、FoMni（またはそのセーフモード）から同じ USB ケーブルで書き込みます。FoMni で保存したコードと音色は消えることがあります。",
+    stockwhy: "M-VAVE の FM-1 V15 を、FoMni-1（またはそのセーフモード）から同じ USB ケーブルで書き込みます。FoMni-1 で保存したコードと音色は消えることがあります。",
     stock1: "M-VAVE の FM-1 V15 をダウンロード:",
     stock2: "ダウンロードしたファイルを選ぶ:",
     stock3: "FM-1 を USB で接続し、下のボタンを押す。",
@@ -103,14 +103,14 @@ const TEXT = {
     intro: "Connect the FM-1 by USB. (Works in Chrome or Edge.)",
     warn: "Do not unplug the USB cable while writing.",
     install: "Install", other: "日本語",
-    manual: "Back to FoMni",
+    manual: "Back to FoMni-1",
     direct: "Connect the USB cable directly to the computer. No probe or Transporter is needed.",
     brick: "If the FM-1 no longer starts, a Mac can put the stock firmware back:",
     bricklink: "recovering an FM-1 that won't start",
     beta: "This is a beta and may be unstable. The author accepts no responsibility if your FM-1 is damaged or misbehaves because of this custom firmware. Use it at your own risk.",
     back: "To go back to the official firmware, use \"Back to the stock firmware\" below, or M-VAVE's own updater, M-UPGRADE (Downloads → PC Software → M-UPGRADE).",
     stockh: "Back to the stock firmware",
-    stockwhy: "This writes M-VAVE's own FM-1 V15 back, from FoMni (or its safe mode, X0X or Felucca) over the same USB cable. Chords and sounds saved in FoMni may be lost.",
+    stockwhy: "This writes M-VAVE's own FM-1 V15 back, from FoMni-1 (or its safe mode, X0X or Felucca) over the same USB cable. Chords and sounds saved in FoMni-1 may be lost.",
     stock1: "Download M-VAVE's FM-1 V15:",
     stock2: "Choose the file you downloaded:",
     stock3: "Connect the FM-1 by USB and press the button below.",
@@ -162,7 +162,7 @@ window.addEventListener("beforeunload", (e) => { if (writing) { e.preventDefault
     const pkg = new Uint8Array(await r.arrayBuffer());
     if (productOf(pkg) !== meta.product) { sayK("badpkg"); return; }
     image = logicalImage(pkg);
-    say(`FoMni ${meta.version}`);
+    say(`FoMni-1 ${meta.version}`);
     $("go").disabled = false;
   } catch (e) { sayK("loadfail", e.message); }
 })();

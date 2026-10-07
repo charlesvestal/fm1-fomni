@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Make the FoMni site for GitHub Pages (https://charlesvestal.github.io/fm1-omnichord/):
+"""Make the FoMni-1 site for GitHub Pages (https://charlesvestal.github.io/fm1-omnichord/):
 
-  index.html                    what FoMni is, how it plays, and the ways in: try, install, download, source
+  index.html                    what FoMni-1 is, how it plays, and the ways in: try, install, download, source
   img/                          screenshots (docs/img)
-  emu/                          FoMni in the browser (build/emu, from web/emu/build.sh)
+  emu/                          FoMni-1 in the browser (build/emu, from web/emu/build.sh)
   install/index.html            the web installer (web/omni_installer.html, with fm1pkg.js, fm1ota.js and
                                 the package's metadata inlined; Chrome or Edge, Web MIDI)
   firmware/omni-VERSION.fwsc    the package the installer writes; also the download
@@ -31,7 +31,7 @@ LANDING = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FoMni for the FM-1</title>
+<title>FoMni-1</title>
 <meta name="description" content="A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord: strum the white keys, pick chords on the black ones.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,20 +72,20 @@ ul.pages b { color: var(--teal); }
 </head>
 <body>
 <main>
-<h1>FoMni</h1>
-<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/pahaM6nzucE" title="FoMni running on the FM-1"
+<h1>FoMni-1</h1>
+<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/pahaM6nzucE" title="FoMni-1 running on the FM-1"
   allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
 <p class="lede">A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord. Pick a chord on the black
 keys, run a finger across the white keys, and it rings out. Behind it are an organ-like chord, a bass, and the
 OM-84's ten rhythms, which can play the bass and chord in time.</p>
 <div class="shots">
-  <img src="img/screen-strum.png" width="240" height="240" alt="FoMni's screen: the chord C, sixteen strings ringing, the chord buttons below">
-  <img src="img/screen-chord.png" width="240" height="240" alt="FoMni's screen: A minor held">
-  <img src="img/screen-rhythm.png" width="240" height="240" alt="FoMni's rhythm page: the Rock 1 pattern">
+  <img src="img/screen-strum.png" width="240" height="240" alt="FoMni-1's screen: the chord C, sixteen strings ringing, the chord buttons below">
+  <img src="img/screen-chord.png" width="240" height="240" alt="FoMni-1's screen: A minor held">
+  <img src="img/screen-rhythm.png" width="240" height="240" alt="FoMni-1's rhythm page: the Rock 1 pattern">
 </div>
 <div class="status"><strong>Version __VERSION__.</strong> It installs and
 uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own firmware back. Installing is at your own risk.</div>
-<nav class="ways" aria-label="Get FoMni">
+<nav class="ways" aria-label="Get FoMni-1">
   <a href="emu/"><strong>Try it in the browser</strong><span>The same code the FM-1 runs, with sound. Drag across the white keys to strum; no FM-1 needed.</span></a>
   <a href="install/"><strong>Install</strong><span>From Chrome or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>
   <a href="firmware/__PKG__"><strong>Download __PKG__</strong><span>For the command-line installer: <code>python3 tools/fm1_install.py __PKG__</code></span></a>
@@ -103,7 +103,7 @@ uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own fi
 <tr><td>ALGORITHM</td><td>Rhythm.</td></tr>
 <tr><td>PRESETS</td><td>Transpose (−6 to +6).</td></tr>
 <tr><td>KNOB 1–4</td><td>The four values on the screen (see the pages below).</td></tr>
-<tr><td>SAVE</td><td>Saves. FoMni also saves by itself a few seconds after a change, once it's quiet.</td></tr>
+<tr><td>SAVE</td><td>Saves. FoMni-1 also saves by itself a few seconds after a change, once it's quiet.</td></tr>
 </table>
 
 <h2>The pages</h2>
@@ -118,7 +118,7 @@ uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own fi
 <p class="small">MIDI out: the strings on channel 1, the chord on 2, the bass on 3, the drums on 10. To go back to the official
 firmware, use the installer's "Back to the stock firmware", or M-VAVE's updater, M-UPGRADE, from
 <a href="https://www.m-vave.com/download">m-vave.com/download</a>. Omnichord is a trademark of Suzuki; M-VAVE and FM-1 are
-trademarks of their owners. FoMni is not affiliated with any of them.</p>
+trademarks of their owners. FoMni-1 is not affiliated with any of them.</p>
 </main>
 </body>
 </html>

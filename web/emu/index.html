@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FoMni in the browser</title>
-<meta name="description" content="Play FoMni, a chord harp firmware for the M-VAVE FM-1 inspired by the Omnichord, in your browser: the same code the FM-1 runs.">
+<title>FoMni-1 in the browser</title>
+<meta name="description" content="Play FoMni-1, a chord harp firmware for the M-VAVE FM-1 inspired by the Omnichord, in your browser: the same code the FM-1 runs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
@@ -60,7 +60,7 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
 <body>
 <main>
 <header>
-  <h1>FoMni</h1>
+  <h1>FoMni-1</h1>
   <p>a chord harp for the FM-1, in the browser: the same code the FM-1 runs</p>
   <nav><a href="../">About</a><a href="../install/">Install</a><a href="https://github.com/charlesvestal/fm1-omnichord">Source</a></nav>
 </header>
@@ -111,7 +111,7 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
   <div>
     <h2>Saving</h2>
     <p>SAVE keeps your chords and sound in this browser, as the FM-1 keeps them in its memory. Factory reset forgets them.
-      It is the firmware, not a recording: what you hear is FoMni running, at the FM-1's 44.1 kHz.</p>
+      It is the firmware, not a recording: what you hear is FoMni-1 running, at the FM-1's 44.1 kHz.</p>
   </div>
 </section>
 </main>
@@ -415,7 +415,7 @@ async function switchOn() {
           if (m.fb) drawScreen(m.fb);
           drawLights(m.buttons, m.keys);
           window.omniLast = m;
-          if (m.load !== undefined) cpu.textContent = `FoMni uses ${m.load}% of this computer's time`;
+          if (m.load !== undefined) cpu.textContent = `FoMni-1 uses ${m.load}% of this computer's time`;
           if (m.store) saveStore(m.store);
         }
       };

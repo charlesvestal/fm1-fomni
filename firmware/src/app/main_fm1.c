@@ -235,8 +235,8 @@ static void splash(void)
     {
         int32_t w = text_w(&FONT_L, "FoMni");
         cv_text((240 - w) / 2, 0, &FONT_L, "FoMni", RGB(242, 120, 72));
-        w = text_w(&FONT_S, "FM Omni: a chord harp");
-        cv_text((240 - w) / 2, 42, &FONT_S, "FM Omni: a chord harp", RGB(150, 136, 118));
+        w = text_w(&FONT_S, "A chord harp for the FM-1");
+        cv_text((240 - w) / 2, 42, &FONT_S, "A chord harp for the FM-1", RGB(150, 136, 118));
     }
     cv_blit(0, 92);
     lcd_sync();

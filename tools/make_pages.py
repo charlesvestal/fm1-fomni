@@ -31,7 +31,7 @@ LANDING = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FoMni (FM Omni) for the FM-1</title>
+<title>FoMni for the FM-1</title>
 <meta name="description" content="A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord: strum the white keys, pick chords on the black ones.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,7 +63,6 @@ td:first-child { font-weight: 600; white-space: nowrap; color: var(--teal); }
 p.small { color: var(--muted); font-size: .9rem; }
 a { color: var(--accent); }
 code { font-size: .9em; }
-h1 .sub { font-size: .45em; font-weight: 600; color: var(--muted); }
 ul.pages { padding-left: 1.2rem; margin: 0 0 1rem; }
 ul.pages li { margin: 0 0 .4rem; }
 ul.pages b { color: var(--teal); }
@@ -73,7 +72,7 @@ ul.pages b { color: var(--teal); }
 </head>
 <body>
 <main>
-<h1>FoMni <span class="sub">(FM Omni)</span></h1>
+<h1>FoMni</h1>
 <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/pahaM6nzucE" title="FoMni running on the FM-1"
   allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
 <p class="lede">A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord. Pick a chord on the black

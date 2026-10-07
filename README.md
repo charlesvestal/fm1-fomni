@@ -1,4 +1,4 @@
-# FoMni (FM Omni) for the M-VAVE FM-1
+# FoMni for the M-VAVE FM-1
 
 FoMni turns the M-VAVE FM-1 into a chord harp inspired by the Suzuki Omnichord. The 16 white
 keys are the strum plate: run a finger across them and they ring out the chord. The 11 black keys

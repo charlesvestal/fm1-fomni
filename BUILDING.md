@@ -1,4 +1,4 @@
-# Building OMNI
+# Building FoMni
 
 The build makes three files in `build/`:
 

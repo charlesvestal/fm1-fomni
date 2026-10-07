@@ -32,7 +32,7 @@ FONTSETS = {
                ("S", "BarlowSemiCondensed-Medium.ttf", 15, 1, False, 32, 126),
                ("B", "BarlowSemiCondensed-Bold.ttf", 15, 1, False, 32, 126),
                ("M", "BarlowSemiCondensed-SemiBold.ttf", 23, 1, False, 32, 95),
-               ("L", "BarlowSemiCondensed-Bold.ttf", 31, 1, False, 32, 95)],
+               ("L", "BarlowSemiCondensed-Bold.ttf", 31, 1, False, 32, 126)],
     "inter": [("XS", "Inter[opsz,wght].ttf@wght=600", 11, 1, False, 32, 126),
               ("S", "Inter[opsz,wght].ttf@wght=500", 14, 1, False, 32, 126),
               ("B", "Inter[opsz,wght].ttf@wght=700", 14, 1, False, 32, 126),

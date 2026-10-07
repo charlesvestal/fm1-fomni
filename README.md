@@ -1,15 +1,15 @@
-# OMNI for the M-VAVE FM-1
+# FoMni (FM Omni) for the M-VAVE FM-1
 
-OMNI turns the M-VAVE FM-1 into a chord harp inspired by the Suzuki Omnichord. The 16 white
+FoMni turns the M-VAVE FM-1 into a chord harp inspired by the Suzuki Omnichord. The 16 white
 keys are the strum plate: run a finger across them and they ring out the chord. The 11 black keys
 are the chord buttons. Behind them sit an organ-like chord with its bass, and the OM-84's ten
 rhythms, which can play the bass and chord in time (auto bass sync).
 
 It is meant to be simple: one screen, four knobs a page, no patterns to program.
 
-[![OMNI running on the FM-1 (watch on YouTube)](https://img.youtube.com/vi/pahaM6nzucE/maxresdefault.jpg)](https://www.youtube.com/watch?v=pahaM6nzucE)
+[![FoMni running on the FM-1 (watch on YouTube)](https://img.youtube.com/vi/pahaM6nzucE/maxresdefault.jpg)](https://www.youtube.com/watch?v=pahaM6nzucE)
 
-![OMNI's screen: a C chord strummed](docs/img/screen-strum.png) ![A minor held](docs/img/screen-chord.png) ![The rhythm page](docs/img/screen-rhythm.png)
+![FoMni's screen: a C chord strummed](docs/img/screen-strum.png) ![A minor held](docs/img/screen-chord.png) ![The rhythm page](docs/img/screen-rhythm.png)
 
 - **Try it in your browser** (no FM-1 needed): <https://charlesvestal.github.io/fm1-omnichord/emu/>
 - **Install it** (Chrome or Edge, with the FM-1 plugged in): <https://charlesvestal.github.io/fm1-omnichord/install/>
@@ -32,7 +32,7 @@ firmware back, and an FM-1 that keeps crashing starts in a safe mode.
 | ALGORITHM | Rhythm. |
 | PRESETS | Transpose (−6 to +6). |
 | KNOB 1–4 | The four values on the screen (see the pages below). |
-| SAVE | Saves. OMNI also saves by itself a few seconds after a change, once it's quiet. |
+| SAVE | Saves. FoMni also saves by itself a few seconds after a change, once it's quiet. |
 
 ### The pages
 
@@ -72,5 +72,5 @@ The rhythms, waves, drum sounds and envelope shapes come from
 [Felucca](https://github.com/hugelton/Felucca)'s by Leo Kuroshita (Hügelton Instruments), by way of
 [X0X](https://github.com/charlesvestal/fm1-x0x). GPL-3.0-only; see [LICENSING.md](LICENSING.md).
 
-Omnichord is a trademark of Suzuki. OMNI isn't affiliated with or endorsed by Suzuki, M-VAVE or
+Omnichord is a trademark of Suzuki. FoMni isn't affiliated with or endorsed by Suzuki, M-VAVE or
 Hügelton Instruments.

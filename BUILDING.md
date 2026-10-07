@@ -86,5 +86,5 @@ mode. If the FM-1 no longer starts but reaches the chip's update mode (4C4A:8057
 1. `./build.sh --release X.Y` (the identity, FM-1_8XXYYZZ, is what the installer checks).
 2. `tools/publish_pages.sh X.Y`: builds the site (landing page, browser emulator, web installer,
    firmware) with `tools/make_pages.py` and pushes it to the `gh-pages` branch, which GitHub Pages
-   serves at <https://charlesvestal.github.io/fm1-omnichord/>.
+   serves at <https://charlesvestal.github.io/fm1-fomni/>.
 3. `gh release create vX.Y build/omni-X.Y.fwsc` for the command-line download.

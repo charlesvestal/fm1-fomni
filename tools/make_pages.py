@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Make the FoMni-1 site for GitHub Pages (https://charlesvestal.github.io/fm1-omnichord/):
+"""Make the FoMni-1 site for GitHub Pages (https://charlesvestal.github.io/fm1-fomni/):
 
   index.html                    what FoMni-1 is, how it plays, and the ways in: try, install, download, source
   img/                          screenshots (docs/img)
@@ -24,7 +24,7 @@ SRC = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SRC / "web"))
 from make_site import product_of, strip_module  # noqa: E402  (Felucca's: the package format)
 
-REPO = "https://github.com/charlesvestal/fm1-omnichord"
+REPO = "https://github.com/charlesvestal/fm1-fomni"
 
 LANDING = """<!doctype html>
 <html lang="en">

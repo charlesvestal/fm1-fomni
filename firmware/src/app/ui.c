@@ -44,7 +44,7 @@ static struct {
     uint8_t view;
     uint32_t btn, keys, btn_used;
     uint32_t enc_t[NE];
-    int8_t pad;                        /* the chord button sounding (or held), -1 none */
+    int8_t pad;                        /* the chord button sounding (or held), -1 none, -2 a chord from MIDI */
     uint8_t pad_sel;                   /* the chord button the CHORDS page edits */
     uint8_t npads_down;
     uint8_t root, type;                /* the chord (before transpose) */
@@ -94,6 +94,9 @@ static int str_len_(const char *s)
 }
 
 static void mark_dirty(void) { ui.dirty = 1; }
+
+static uint32_t kb_held[4];                    /* MIDI in channel 2: the notes held (128) */
+static int kb_any(void) { return (kb_held[0] | kb_held[1] | kb_held[2] | kb_held[3]) != 0; }
 int ui_dirty(void) { return ui.dirty != 0; }
 
 static void chord_name(int root, int type, char *b)
@@ -274,7 +277,7 @@ static void button(int b)
         } else if (ui.armed) {
             ui.armed = 0;
             say("SYNC START", "CANCELLED");
-        } else if (proj.sync && ui.pad < 0) {
+        } else if (proj.sync && ui.pad == -1) {
             ui.armed = 1;
             say("WAITING FOR", "A CHORD");
         } else {
@@ -290,7 +293,7 @@ static void button(int b)
         break;
     case B_ARP:
         proj.hold = (uint8_t)!proj.hold;
-        if (!proj.hold && !ui.npads_down && ui.pad >= 0) {
+        if (!proj.hold && !ui.npads_down && ui.pad != -1 && !(ui.pad == -2 && kb_any())) {
             om_gate(0);
             ui.pad = -1;
         }
@@ -317,14 +320,81 @@ static void button(int b)
     }
 }
 
+/* MIDI in, channel 2: the chord held on a keyboard. The best fit of the nine types: a root among the
+ * notes (the lowest preferred), as many of its tones held as possible and nothing left over but its
+ * fifth (a held C E G Bb is C7, which the OM plays without the G). Under two notes: no chord. */
+static int kb_chord(int *root, int *type)
+{
+    uint32_t pcs = 0, n;
+    int low = -1, r, t, best = -1;
+    for (n = 0; n < 128u; n++)
+        if (kb_held[n >> 5] >> (n & 31u) & 1u) {
+            pcs |= 1u << (n % 12u);
+            if (low < 0)
+                low = (int)(n % 12u);
+        }
+    if (low < 0 || !(pcs & (pcs - 1u)))
+        return 0;
+    for (r = 0; r < 12; r++) {
+        if (!(pcs >> r & 1u))
+            continue;
+        for (t = 0; t < CH_NTYPES; t++) {
+            uint32_t tones = 0, k;
+            int score, hit = 0, extra = 0;
+            for (k = 0; k < 3u; k++)
+                tones |= 1u << ((r + OM_TYPE_TONES[t][k]) % 12);
+            for (k = 0; k < 12u; k++) {
+                hit += (pcs & tones) >> k & 1u;
+                extra += (pcs & ~tones & ~(1u << ((r + 7) % 12))) >> k & 1u;
+            }
+            score = hit * 10 - extra * 3 + (r == low) * 2 - t / 4;   /* the common types first, on a tie */
+            if (score > best) {
+                best = score;
+                *root = r;
+                *type = t;
+            }
+        }
+    }
+    return best >= 20;
+}
+
+static void kb_update(void)
+{
+    int root, type;
+    if (kb_chord(&root, &type)) {
+        if (ui.pad == -2 && ui.root == root && ui.type == type)
+            return;
+        ui.root = (uint8_t)root;
+        ui.type = (uint8_t)type;
+        ui.pad = -2;                             /* a chord from MIDI: no button lit */
+        sound_chord();
+        om_gate(1);
+        if (ui.armed) {
+            ui.armed = 0;
+            om_play(1);
+        }
+    } else if (ui.pad == -2 && !kb_any() && !proj.hold) {
+        ui.pad = -1;                             /* all let go */
+        om_gate(0);
+    }
+}
+
+/* MIDI in (USB and the TRS jack): channel 1 notes pluck the nearest string, channel 2 notes pick the
+ * chord, clock and start / stop drive the rhythm */
 static void midi_in(void)
 {
     uint32_t pkt;
-    while (plat_midi_in(&pkt))                 /* MIDI in: notes on channel 1 pluck the nearest string */
-        if (((pkt >> 8) & 0xF0u) == 0x90u && ((pkt >> 8) & 0x0Fu) == 0u && (pkt >> 24)) {
-            int n = (int)((pkt >> 16) & 0x7Fu), s, best = 0, bd = 999;
+    int chords = 0;
+    while (plat_midi_in(&pkt)) {
+        uint32_t st = (pkt >> 8) & 0xFFu, n = (pkt >> 16) & 0x7Fu, v = pkt >> 24;
+        if (st == 0xF8u || st == 0xFAu || st == 0xFBu || st == 0xFCu) {
+            om_clock(st == 0xF8u ? OM_CLK_TICK : st == 0xFAu ? OM_CLK_START : st == 0xFBu ? OM_CLK_CONTINUE : OM_CLK_STOP);
+            if (st == 0xFAu)
+                ui.armed = 0;
+        } else if (st == 0x90u && v) {
+            int s, best = 0, bd = 999;
             for (s = 0; s < OM_NSTR; s++) {
-                int d = om_str_note[s] - n;
+                int d = om_str_note[s] - (int)n;
                 d = d < 0 ? -d : d;
                 if (d < bd) {
                     bd = d;
@@ -332,7 +402,16 @@ static void midi_in(void)
                 }
             }
             om_strum(best);
+        } else if (st == 0x91u || st == 0x81u) {
+            if (st == 0x91u && v)
+                kb_held[n >> 5] |= 1u << (n & 31u);
+            else
+                kb_held[n >> 5] &= ~(1u << (n & 31u));
+            chords = 1;
         }
+    }
+    if (chords)
+        kb_update();
 }
 
 static void input(void)
@@ -421,7 +500,7 @@ static void draw_header(void)
     int msg = plat_ms() < ui.msg_until;
     uint32_t h = hash(hash(hash(2166136261u, ui.view), om_playing | ui.armed << 1 | proj.hold << 2 | proj.sync << 3 |
                                                        ui.dirty << 4 | (uint32_t)msg << 5),
-                      (uint32_t)proj.par[P_RHYTHM] << 8 | (uint32_t)proj.par[P_TEMPO]);
+                      (uint32_t)proj.par[P_RHYTHM] << 8 | (uint32_t)proj.par[P_TEMPO] | (uint32_t)om_ext << 20);
     if (msg)
         h = hash(hash(h, (uint32_t)ui.msg[0][0] << 8 | ui.msg[0][1]), ui.msg_until);
     if (om_playing)
@@ -438,7 +517,14 @@ static void draw_header(void)
         cv_text(x, 6, &FONT_B, VIEW_NAME[ui.view], K_TEXT);
         x = 232;
         {   /* right: tempo, the rhythm, its state */
-            itoa_u((uint32_t)proj.par[P_TEMPO], t);
+            if (om_ext) {                         /* following MIDI clock */
+                t[0] = 'E';
+                t[1] = 'X';
+                t[2] = 'T';
+                t[3] = 0;
+            } else {
+                itoa_u((uint32_t)proj.par[P_TEMPO], t);
+            }
             x -= text_w(&FONT_S, t);
             cv_text(x, 6, &FONT_S, t, om_playing ? K_TEXT : K_DIM);
             x -= 8 + text_w(&FONT_S, om_rhythm(proj.par[P_RHYTHM])->name);

@@ -80,7 +80,7 @@ void plat_leds(uint32_t b, uint32_t k)
 #define MQ 256
 static uint32_t min_q[MQ], mi_w, mi_r;
 static FILE *midi_log;
-static uint32_t midi_out_count;
+static uint32_t midi_out_count, clock_out_count;
 int plat_midi_in(uint32_t *pkt)
 {
     if (mi_r == mi_w)
@@ -91,6 +91,10 @@ int plat_midi_in(uint32_t *pkt)
 void plat_midi_out(uint32_t pkt)
 {
     midi_out_count++;
+    if (((pkt >> 8) & 0xFF) == 0xF8) {
+        clock_out_count++;
+        return;
+    }
     if (midi_log)
         fprintf(midi_log, "%u ms: %02X %02X %02X\n", now_ms, (pkt >> 8) & 0xFF, (pkt >> 16) & 0xFF, (pkt >> 24) & 0xFF);
 }
@@ -357,6 +361,12 @@ static int expect(const char *what, const char *val)
         got = ui.dirty;
     else if (!strcmp(what, "store_writes"))
         got = (int)store_writes;
+    else if (!strcmp(what, "clocks_out"))
+        got = (int)clock_out_count;
+    else if (!strcmp(what, "step"))
+        got = om_step;
+    else if (!strcmp(what, "ext"))
+        got = om_ext;
     else if (!strcmp(what, "midi_out"))
         got = (int)midi_out_count;
     else if (!strcmp(what, "chord_level"))

@@ -62,6 +62,11 @@ void om_gate(int on);                          /* a chord pad held (1) / release
 void om_strum(int string);                     /* pluck string 0..15 */
 void om_play(int on);                          /* the rhythm: start (from its first step) / stop */
 void om_panic(void);                           /* everything quiet, now */
+/* MIDI clock in (the main loop passes it on): OM_CLK_TICK (F8), START, CONTINUE, STOP. While ticks keep
+ * coming (the last within ~0.6 s) they drive the rhythm, 6 a step, and its own tempo stands aside;
+ * otherwise the rhythm sends clock (24 a quarter note) and start / stop, with MIDI out on. */
+enum { OM_CLK_TICK, OM_CLK_START, OM_CLK_CONTINUE, OM_CLK_STOP };
+void om_clock(int msg);
 
 /* the render (audio ISR): n stereo frames, 24-bit in int32; gain Q12 (the MASTER pot) */
 void om_render(int32_t *out_lr, uint32_t n, uint32_t gain_q12);
@@ -75,6 +80,7 @@ extern volatile uint8_t om_str_note[OM_NSTR];  /* the note each string plucks, f
 extern volatile float om_chord_level, om_bass_level;
 extern volatile uint8_t om_playing, om_step, om_steps;
 extern volatile uint8_t om_drum_hit;           /* bits: drums hit since the UI last cleared it */
+extern volatile uint8_t om_ext;                /* 1: following an external MIDI clock */
 /* the notes a chord gives: harp strings (16, with transpose and octave), chord (3) and bass root */
 void om_voicing(int root, int type, int transpose, int octave, uint8_t harp[OM_NSTR], uint8_t chord[OM_NCHORD],
                 uint8_t *bass);

@@ -47,8 +47,15 @@ Each page puts four values on KNOB 1–4. EDIT steps through the pages.
 **Voice 1** is the Omnichord's shimmering harp, and **Voice 2** is its plain one. Mix them, and
 set how long the strings ring with **Sustain**.
 
-**MIDI out** (on by default): the strings on channel 1, the chord on 2, the bass on 3 and the
-drums on 10. **MIDI in**: notes on channel 1 pluck the nearest string.
+### MIDI
+
+MIDI comes in over USB and the TRS jack (the FM-1's jack is an input), and goes out over USB.
+
+- **In, channel 1:** notes pluck the nearest string.
+- **In, channel 2:** play a chord on a keyboard and it becomes the chord, as if you'd pressed a black key.
+- **In, clock:** the rhythm follows MIDI clock and start / stop; the screen shows EXT for the tempo.
+- **Out** (on by default, Setup page): the strings on channel 1, the chord on 2, the bass on 3, the drums
+  on 10, and clock with start / stop when the rhythm runs on its own tempo.
 
 ## Building and testing
 

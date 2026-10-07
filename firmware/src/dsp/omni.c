@@ -89,7 +89,7 @@ void om_voicing(int root, int type, int transpose, int octave, uint8_t harp[OM_N
 }
 
 /* ------------------------------------------------------------ commands --- */
-enum { C_SET, C_CHORD, C_GATE, C_STRUM, C_PLAY, C_PANIC };
+enum { C_SET, C_CHORD, C_GATE, C_STRUM, C_PLAY, C_PANIC, C_CLOCK };
 #define QN 64u
 static uint32_t q[QN];
 static volatile uint32_t q_w, q_r;
@@ -108,6 +108,7 @@ void om_gate(int on) { post(C_GATE, on, 0); }
 void om_strum(int s) { post(C_STRUM, s, 0); }
 void om_play(int on) { post(C_PLAY, on, 0); }
 void om_panic(void) { post(C_PANIC, 0, 0); }
+void om_clock(int msg) { post(C_CLOCK, msg, 0); }
 
 /* -------------------------------------------------------------- state --- */
 volatile float om_str_level[OM_NSTR];
@@ -115,6 +116,7 @@ volatile uint8_t om_str_note[OM_NSTR];        /* the note a pluck plays now */
 volatile float om_chord_level, om_bass_level;
 volatile uint8_t om_playing, om_step, om_steps = 32;
 volatile uint8_t om_drum_hit;
+volatile uint8_t om_ext;
 
 static int16_t par[P_NPARAMS];
 static float tunefac = 1.0f, v1, v2, cvol, rvol, rsend, csend, sus_rate;
@@ -270,8 +272,9 @@ typedef struct {
     uint8_t on;
 } drum_t;
 static drum_t drum[OM_NDRUM];
-static int rh, rh_next, step;
-static float step_left, step_len;
+static int rh, rh_next, step, pulse;            /* pulse: MIDI clock, 0..5 within a step */
+static float pulse_left, step_len;
+static uint32_t ext_age;                         /* render calls since the last clock tick */
 static const uint8_t GM_DRUM[OM_NDRUM] = {36, 75, 42, 51, 38};   /* BD, claves, closed hat, ride, snare */
 
 static void tempo_set(void) { step_len = OM_SR * 60.0f / ((float)par[P_TEMPO] * 4.0f); }
@@ -482,6 +485,42 @@ void om_init(void)
     retune();
 }
 
+/* the rhythm's clock: a step every 6 pulses. From its own tempo (pulse_left) or from MIDI clock in */
+static void clock_pulse(void)
+{
+    if (pulse == 0)
+        do_step();
+    if (!om_ext)
+        midi(0xF8, 0, 0);
+    if (++pulse >= 6)
+        pulse = 0;
+}
+
+static void play_start(int from_top)
+{
+    if (from_top) {
+        rh = rh_next;
+        om_steps = OM_RHYTHM[rh].len;
+        step = 0;
+        pulse = 0;
+    }
+    pulse_left = 0.0f;
+    om_playing = 1;
+    if (!om_ext)
+        midi(from_top ? 0xFA : 0xFB, 0, 0);
+}
+
+static void play_stop(void)
+{
+    om_playing = 0;
+    if (!om_ext)
+        midi(0xFC, 0, 0);
+    if (!gate) {
+        chord_cmd('R');
+        bass_cmd('R', 'R');
+    }
+}
+
 static void drain(void)
 {
     while (q_r != q_w) {
@@ -515,18 +554,24 @@ static void drain(void)
                 strum(a);
             break;
         case C_PLAY:
-            if (a && !om_playing) {
-                rh = rh_next;
-                om_steps = OM_RHYTHM[rh].len;
-                step = 0;
-                step_left = 0.0f;
-                om_playing = 1;
-            } else if (!a && om_playing) {
-                om_playing = 0;
-                if (!gate) {
-                    chord_cmd('R');
-                    bass_cmd('R', 'R');
-                }
+            if (a && !om_playing)
+                play_start(1);
+            else if (!a && om_playing)
+                play_stop();
+            break;
+        case C_CLOCK:
+            om_ext = 1;                             /* a clock message: someone else leads */
+            ext_age = 0;
+            if (a == OM_CLK_TICK) {
+                if (om_playing)
+                    clock_pulse();
+            } else if (a == OM_CLK_START) {
+                play_start(1);
+            } else if (a == OM_CLK_CONTINUE) {
+                if (!om_playing)
+                    play_start(0);
+            } else if (om_playing) {
+                play_stop();
             }
             break;
         case C_PANIC:
@@ -715,18 +760,20 @@ void om_render(int32_t *out, uint32_t n, uint32_t gain_q12)
 {
     const float gain = (float)gain_q12 * (1.0f / 4096.0f) * 2.0f;
     drain();
+    if (om_ext && ++ext_age > 100u)                /* ~0.6 s without a tick: back to its own tempo */
+        om_ext = 0;
     while (n) {
         uint32_t k = n > BLK ? BLK : n;
-        if (om_playing) {
-            if (step_left <= 0.0f) {
-                do_step();
-                step_left += step_len;
+        if (om_playing && !om_ext) {
+            if (pulse_left <= 0.0f) {
+                clock_pulse();
+                pulse_left += step_len * (1.0f / 6.0f);
             }
-            if ((float)k > step_left)
-                k = (uint32_t)step_left + 1u;
+            if ((float)k > pulse_left)
+                k = (uint32_t)pulse_left + 1u;
             if (k > n)
                 k = n;
-            step_left -= (float)k;
+            pulse_left -= (float)k;
         }
         render_chunk(out, k, gain);
         out += 2 * k;

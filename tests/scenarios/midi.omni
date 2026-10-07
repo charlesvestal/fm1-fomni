@@ -1,0 +1,60 @@
+# MIDI in: channel 2 chords, channel 1 plucks, clock in drives the rhythm, clock out when it leads
+wait 100
+# a C7 held on a keyboard (C E G Bb): C7, the OM's way (no fifth)
+midi 91 30 64
+midi 91 34 64
+midi 91 37 64
+midi 91 3A 64
+wait 20
+expect root 0
+expect type 2
+expect pad -2
+expect chord_level >50
+# Am in first inversion (C E A): A minor
+midi 81 37 00
+midi 81 3A 00
+midi 81 30 00
+midi 81 34 00
+midi 91 30 64
+midi 91 34 64
+midi 91 39 64
+wait 20
+expect root 9
+expect type 1
+# all let go: the chord stops
+midi 81 30 00
+midi 81 34 00
+midi 81 39 00
+wait 400
+expect pad -1
+expect chord_level 0
+# channel 1 plucks the nearest string (middle C: string 4 of Am, A2 C3 E3 | A3 C4 E4)
+midi 90 3C 64
+wait 20
+expect strlevel4 >50
+# clock in: start, then ticks drive the steps (6 a step)
+midi FA 00 00
+wait 5
+expect playing 1
+wait 20
+midi F8 00 00
+midi F8 00 00
+midi F8 00 00
+midi F8 00 00
+midi F8 00 00
+midi F8 00 00
+midi F8 00 00
+wait 20
+expect step 1
+expect ext 1
+shot ext.png
+midi FC 00 00
+wait 10
+expect playing 0
+# no ticks for a while: its own tempo again, and it sends clock
+wait 800
+expect ext 0
+tap PLAY
+wait 500
+tap PLAY
+expect clocks_out >20

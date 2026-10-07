@@ -115,7 +115,15 @@ uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own fi
   <li><b>SEL: Chords.</b> Change the chord on any black key: press the key, then turn Root (KNOB 1) and Type (KNOB 2). KNOB 3 and 4 are Transpose and Octave.</li>
   <li><b>GLO: Setup.</b> Tune, MIDI out, Key lights.</li>
 </ul>
-<p class="small">MIDI out: the strings on channel 1, the chord on 2, the bass on 3, the drums on 10. To go back to the official
+<h2>MIDI</h2>
+<p>MIDI comes in over USB and the TRS jack (the FM-1's jack is an input), and goes out over USB.</p>
+<ul class="pages">
+  <li><b>In, channel 1.</b> Notes pluck the nearest string.</li>
+  <li><b>In, channel 2.</b> Play a chord on a keyboard and it becomes the chord, as if you'd pressed a black key.</li>
+  <li><b>In, clock.</b> The rhythm follows MIDI clock and start / stop; the screen shows EXT for the tempo.</li>
+  <li><b>Out</b> (on by default, Setup page). The strings on channel 1, the chord on 2, the bass on 3, the drums on 10, and clock with start / stop when the rhythm runs on its own tempo.</li>
+</ul>
+<p class="small">To go back to the official
 firmware, use the installer's "Back to the stock firmware", or M-VAVE's updater, M-UPGRADE, from
 <a href="https://www.m-vave.com/download">m-vave.com/download</a>. Omnichord is a trademark of Suzuki; M-VAVE and FM-1 are
 trademarks of their owners. FoMni-1 is not affiliated with any of them.</p>

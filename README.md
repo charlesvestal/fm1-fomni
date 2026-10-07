@@ -1,6 +1,6 @@
 # OMNI for the M-VAVE FM-1
 
-OMNI turns the M-VAVE FM-1 into a chord harp in the spirit of the Suzuki Omnichord. The 16 white
+OMNI turns the M-VAVE FM-1 into a chord harp inspired by the Suzuki Omnichord. The 16 white
 keys are the strum plate: run a finger across them and they ring out the chord. The 11 black keys
 are the chord buttons. Behind them sit an organ-like chord with its bass, and the OM-84's ten
 rhythms, which can play the bass and chord in time (auto bass sync).

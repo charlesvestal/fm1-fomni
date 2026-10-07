@@ -24,8 +24,8 @@ your recipients its complete corresponding source under the same licence.
 
 ## Trademarks
 
-Omnichord is a trademark of Suzuki Musical Instrument Corporation, used here only to describe
-what OMNI is modelled on. "Felucca" and "Hügelton Instruments" are names of Hügelton Instruments.
+Omnichord is a trademark of Suzuki Musical Instrument Corporation, used here only to say what
+inspired OMNI. "Felucca" and "Hügelton Instruments" are names of Hügelton Instruments.
 "M-VAVE" and "FM-1" are trademarks of their respective owners. OMNI is independent firmware; it is
 not affiliated with, endorsed by or supported by any of them.
 

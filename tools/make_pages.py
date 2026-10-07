@@ -32,7 +32,7 @@ LANDING = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OMNI for the FM-1</title>
-<meta name="description" content="A chord harp for the M-VAVE FM-1, after the Suzuki Omnichord: strum the white keys, pick chords on the black ones.">
+<meta name="description" content="A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord: strum the white keys, pick chords on the black ones.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
@@ -75,7 +75,7 @@ ul.pages b { color: var(--teal); }
 <h1>OMNI</h1>
 <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/pahaM6nzucE" title="OMNI running on the FM-1"
   allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
-<p class="lede">A chord harp for the M-VAVE FM-1, after the Suzuki Omnichord. Pick a chord on the black
+<p class="lede">A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord. Pick a chord on the black
 keys, run a finger across the white keys, and it rings out. Behind it are an organ-like chord, a bass, and the
 OM-84's ten rhythms, which can play the bass and chord in time.</p>
 <div class="shots">

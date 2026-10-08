@@ -113,7 +113,7 @@ uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own fi
   <li><b>SEQ: Rhythm.</b> Rhythm, Tempo, Drums level, Auto bass (on: the bass and chord play in time with the rhythm).</li>
   <li><b>FX: Sound.</b> Reverb (the strings' send), Space (the plate's size), Width, Chord rev (the chord and bass's send). The drums stay dry.</li>
   <li><b>SEL: Chords.</b> Change the chord on any black key: press the key, then turn Root (KNOB 1) and Type (KNOB 2). KNOB 3 and 4 are Transpose and Octave.</li>
-  <li><b>GLO: Setup.</b> Tune, MIDI out, Key lights.</li>
+  <li><b>GLO: Setup.</b> Tune, MIDI out, Lights (On: the key lights, and the unlit buttons glow dimly so they can be read; Keys: the key lights only; Off).</li>
 </ul>
 <h2>MIDI</h2>
 <p>MIDI comes in over USB and the TRS jack (the FM-1's jack is an input), and goes out over USB.</p>

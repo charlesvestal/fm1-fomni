@@ -129,14 +129,14 @@ static void knob_range(int k, int *lo, int *hi)
         *hi = om_param_info(k)->hi;
     } else {
         *lo = 0;
-        *hi = k == K_PADROOT ? 11 : k == K_PADTYPE ? CH_NTYPES - 1 : k == K_LEDS ? 1 : 0;
+        *hi = k == K_PADROOT ? 11 : k == K_PADTYPE ? CH_NTYPES - 1 : k == K_LEDS ? 2 : 0;
     }
 }
 static const char *knob_name(int k)
 {
     if (k < P_NPARAMS)
         return om_param_info(k)->name;
-    return k == K_PADROOT ? "Root" : k == K_PADTYPE ? "Type" : k == K_LEDS ? "Key lights" : "";
+    return k == K_PADROOT ? "Root" : k == K_PADTYPE ? "Type" : k == K_LEDS ? "Lights" : "";
 }
 static void knob_text(int k, char *b)
 {
@@ -151,8 +151,10 @@ static void knob_text(int k, char *b)
         const char *n = v ? OM_TYPE_NAME[v] : "maj";
         while ((*b++ = *n++))
             ;
-    } else if (k == K_LEDS) {
-        om_param_text(P_MIDI, v, b);             /* On / Off */
+    } else if (k == K_LEDS) {                    /* On: the keys, and the unlit buttons glow; Keys: no glow */
+        const char *n = v == 2 ? "Keys" : v ? "On" : "Off";
+        while ((*b++ = *n++))
+            ;
     } else {
         b[0] = 0;
     }
@@ -737,6 +739,7 @@ static void leds(void)
             if (om_str_level[i] > 0.2f)
                 k |= 1u << WHITE_K[i];
     }
+    plat_glow(proj.leds == 1);
     plat_leds(b, k);
 }
 

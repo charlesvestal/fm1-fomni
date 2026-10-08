@@ -42,7 +42,7 @@ Each page puts four values on KNOB 1–4. EDIT steps through the pages.
 - **SEQ: Rhythm.** Rhythm, Tempo, Drums level, Auto bass (on: the bass and chord play in time with the rhythm).
 - **FX: Sound.** Reverb (the strings' send), Space (the plate's size), Width, Chord rev (the chord and bass's send). The drums stay dry.
 - **SEL: Chords.** Change the chord on any black key: press the key, then turn Root (KNOB 1) and Type (KNOB 2). KNOB 3 and 4 are Transpose and Octave.
-- **GLO: Setup.** Tune, MIDI out, Key lights.
+- **GLO: Setup.** Tune, MIDI out, Lights (On: the key lights, and the unlit buttons glow dimly so they can be read; Keys: the key lights only; Off).
 
 **Voice 1** is the Omnichord's shimmering harp, and **Voice 2** is its plain one. Mix them, and
 set how long the strings ring with **Sustain**.

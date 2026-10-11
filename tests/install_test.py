@@ -288,5 +288,9 @@ installs()
 errors()
 against_js()
 shutil.rmtree(TMP, ignore_errors=True)
+# FoMni37: the SMK-37 Pro's MIDI port and identities
+ok(bool(I.PORT_RE.search("SMK-37 Pro MIDI 1")) and I.model_of("ota-SMK-37 Pro_900") == "SMK-37 Pro"
+   and I.model_of("SMK-37 Pro_800") == "SMK-37 Pro" and I.model_of("SMK-37 Pro_800") != I.model_of("FM-1_800"),
+   "SMK-37 Pro: port name accepted, model compared before the underscore")
 print(f"INSTALL TESTS FAILED ({failed})" if failed else "install tests passed")
 sys.exit(1 if failed else 0)

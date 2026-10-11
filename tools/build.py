@@ -3,10 +3,14 @@
 # Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
 """Build OMNI (built on Felucca, as X0X is): the app, the update loader and an installable .fwsc package.
 
-  tools/build.py [--release X.Y[-suffix]]
+  tools/build.py [--release X.Y[-suffix]] [--board fm1|smk37]
 
 Outputs in build/: omni.bin (app), loader/ota.bin (update loader, Felucca's, unchanged),
 omni.fwsc (package). See BUILDING.md for the toolchain and the SDK.
+
+BOARD=smk37 (or --board smk37) builds FoMni37 for the M-Vave SMK-37 Pro: -DBOARD_SMK37=1 for the app and
+the loader, identity SMK-37 Pro_800 (release SMK-37 Pro_8XXYYZZ), the SMK flash layout (fm1pkg_make.py), and
+the package build/fomni37.fwsc (fomni37-X.Y.fwsc for a release). The default stays the FM-1.
 
 The JieLi toolchain is Linux x86-64 only. JIELI_TOOLCHAIN points at it; on
 macOS (or with JIELI_DOCKER=1) each tool runs in a linux/amd64 container.
@@ -52,6 +56,10 @@ SDK_SHA256 = {
 }
 
 PRODUCT = "FM-1_800"                # package identity; release builds are FM-1_8XXYYZZ (see main)
+BOARD = "fm1"                       # fm1 (default) or smk37: BOARD env or --board
+BOARD_PREFIX = {"fm1": "FM-1_8", "smk37": "SMK-37 Pro_8"}   # identity of a release build: prefix + XXYYZZ
+BOARD_DEFS = {"fm1": [], "smk37": ["-DBOARD_SMK37=1"]}       # the FM-1 build gets no new flag (byte-identical)
+BOARD_STEM = {"fm1": "omni", "smk37": "fomni37"}             # package name
 VERSION = None                      # FELUCCA_VERSION for release builds (default: firmware/src/ui.c)
 
 
@@ -169,7 +177,7 @@ def ldr_wrap(image):
 def build_loader():
     LDR.mkdir(parents=True, exist_ok=True)
     src = FW / "loader"
-    flags = [*CFLAGS, "-Ifirmware/hal", "-Ifirmware/src"]
+    flags = [*CFLAGS, *BOARD_DEFS[BOARD], "-Ifirmware/hal", "-Ifirmware/src"]
     tc_all(("cc", "-c", src / "crt0_ldr.S", "-o", LDR / "crt0_ldr.o"),
            ("cc", *flags, "-c", src / "loader.c", "-o", LDR / "loader.o"))
     elf = LDR / "loader.elf"
@@ -198,11 +206,22 @@ def build_loader():
 # ---- app
 
 def build_app():
-    flags = [*CFLAGS, *FPU, "-Ifirmware/hal", "-Ifirmware/src", "-Ibuild/gen"]
-    for flag in ("OM_CDC",):
-        v = os.environ.get(flag)    # unset: the default in firmware/src/main.c
+    flags = [*CFLAGS, *FPU, *BOARD_DEFS[BOARD], "-Ifirmware/hal", "-Ifirmware/src", "-Ibuild/gen"]
+    for flag in ("OM_CDC",) + (("FELUCCA_DATA_UNTAGGED_OK",) if BOARD == "smk37" else ()):
+        v = os.environ.get(flag)    # unset: the default in firmware/src/main.c (storage.c)
         if v in ("0", "1"):
             flags.append(f"-D{flag}={v}")
+    if BOARD == "smk37":
+        fam = os.environ.get("FELUCCA_DATA_FAMILY")   # SMK store owner (storage.c; default FOMNI)
+        if fam:
+            if not re.fullmatch(r"[A-Z0-9]{1,7}", fam):
+                raise SystemExit("FELUCCA_DATA_FAMILY: 1..7 of A-Z 0-9")
+            flags.append(f'-DFELUCCA_DATA_FAMILY="{fam}"')
+    baud = os.environ.get("OM_LCD_BAUD")          # LCD SPI clock divider (lcd.c LCD_BAUD); unset: the default
+    if baud is not None:
+        if not re.fullmatch(r"[0-9]|1[0-5]", baud):
+            raise SystemExit("OM_LCD_BAUD: 0..15")
+        flags.append(f"-DLCD_BAUD={baud}u")
     flags.append(f'-DFELUCCA_ID="{PRODUCT}"')
     if VERSION:
         flags.append(f'-DOM_VERSION="{VERSION}"')
@@ -221,7 +240,14 @@ def build_app():
     elf = OUT / "omni.elf"
     # unreferenced functions (each in its own section: -ffunction-sections) are dropped: the DSP keeps
     # mono reference paths for the host tests that the firmware no longer calls
-    tc("pi32v2/bin/ld", "--gc-sections", "-e", "_start", "-T", FW / "app.ld", *objs, "-o", elf)
+    ld = FW / "app.ld"
+    if APP_SLOT != 0x8DFBC:          # another board's app slot (SMK-37 Pro): the same script, its XIP length
+        txt = ld.read_text()
+        if txt.count("LENGTH = 0x8DFBC") != 1:
+            raise SystemExit("app.ld: the XIP LENGTH line was not found")
+        ld = OUT / "app.ld"
+        ld.write_text(txt.replace("LENGTH = 0x8DFBC", f"LENGTH = {APP_SLOT:#X}".replace("0X", "0x")))
+    tc("pi32v2/bin/ld", "--gc-sections", "-e", "_start", "-T", ld, *objs, "-o", elf)
     for sect in ("text.bin", "data.bin", "ramtext.bin"):
         (OUT / sect).unlink(missing_ok=True)
     *_, syms, dis, rt = tc_all(("common/bin/objcopy", "-O", "binary", "-j", ".text", elf, OUT / "text.bin"),
@@ -338,12 +364,21 @@ def mmio_check():
 
 
 def main():
-    global PRODUCT, VERSION
+    global PRODUCT, VERSION, BOARD, APP_SLOT
     ap = argparse.ArgumentParser()
     ap.add_argument("--release", metavar="X.Y[.Z]", help="release build: identity FM-1_8XXYYZZ, version string X.Y[.Z]")
+    ap.add_argument("--board", choices=sorted(BOARD_PREFIX), default=None,
+                    help="target board: fm1 (default) or smk37 (default: $BOARD, else fm1)")
     ap.add_argument("--sdk", type=Path, help="JieLi AC79 SDK checkout (default: $AC79_SDK)")
     a = ap.parse_args()
-    name = "omni.fwsc"
+    BOARD = (a.board or os.environ.get("BOARD") or "fm1").lower().replace("-", "")
+    if BOARD not in BOARD_PREFIX:
+        raise SystemExit(f"BOARD={BOARD}: use fm1 or smk37")
+    fm1pkg_make.set_board(BOARD)
+    APP_SLOT = fm1pkg_make.APP_SLOT
+    PRODUCT = fm1pkg_make.BOARDS[BOARD][2]
+    stem = BOARD_STEM[BOARD]
+    name = f"{stem}.fwsc"
     if a.release:
         # identity FM-1_8 + major, minor, patch as two digits each (0.1 -> FM-1_8000100): FM-1 is the
         # model the update tools match on; the number is ours (X0X is FM-1_9...). Digits only after the
@@ -351,9 +386,9 @@ def main():
         m = re.fullmatch(r"(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?(-[A-Za-z0-9]+)?", a.release)
         if not m:
             raise SystemExit(f"--release {a.release}: use X.Y[.Z][-suffix], up to two digits each")
-        PRODUCT = "FM-1_8%02d%02d%02d" % (int(m[1]), int(m[2]), int(m[3] or 0))
+        PRODUCT = BOARD_PREFIX[BOARD] + "%02d%02d%02d" % (int(m[1]), int(m[2]), int(m[3] or 0))
         VERSION = a.release.upper() if "BETA" in a.release.upper() else a.release.upper() + " BETA"
-        name = f"omni-{a.release}.fwsc"
+        name = f"{stem}-{a.release}.fwsc"
     fm1pkg_make.SDK = a.sdk
     for rel, sha in SDK_SHA256.items():          # fail early without the SDK
         if hashlib.sha256(fm1pkg_make.sdk_file(rel)).hexdigest() != sha:
@@ -379,7 +414,7 @@ def main():
     (OUT / name).write_bytes(pkg)
     print(f"app      {OUT / 'omni.bin'}  {len(img)} B")
     print(f"loader   {LDR / 'ota.bin'}  {len(ota)} B")
-    print(f"package  {OUT / name}  {len(pkg)} B, identity {PRODUCT}")
+    print(f"package  {OUT / name}  {len(pkg)} B, identity {PRODUCT}" + ("" if BOARD == "fm1" else f", board {BOARD}"))
     return 0
 
 

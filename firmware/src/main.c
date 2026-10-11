@@ -8,10 +8,16 @@
 #include "fm1_sys.h"
 #include "fm1_irq.h"
 #include "fm1_guard.h"
+#if BOARD_SMK37
+#include "smk_input.h"           /* SMK-37 Pro: keys, buttons, encoders, LEDs, pads, faders, wheels, battery */
+#else
 #include "fm1_input.h"
+#endif
 #include "fm1_timer.h"
 #include "fm1_audio.h"
+#if !BOARD_SMK37
 #include "fm1_adc.h"
+#endif
 #include "fm1_lcd_hw.h"
 #include "fm1_flash.h"
 #include "fm1_xip.h"
@@ -37,11 +43,23 @@ static inline int32_t clamp(int32_t v, int32_t lo, int32_t hi) { return v < lo ?
 #endif
 #define FELUCCA_UAC OM_UAC
 #ifndef FELUCCA_ID
+#if BOARD_SMK37
+#define FELUCCA_ID "SMK-37 Pro_800"   /* package identity (tools/build.py) */
+#else
 #define FELUCCA_ID "FM-1_800"     /* package identity (tools/build.py) */
+#endif
 #endif
 #include "usb.c"
 #ifndef OM_TRS
+#if BOARD_SMK37
+#define OM_TRS 0                  /* SMK-37 Pro: its TRS jack is MIDI OUT (UART1 TX, PC7), and PH8, the FM-1's MIDI IN
+                                   * pin, is a key-matrix row there: it must never become UART RX */
+#else
 #define OM_TRS 1                  /* MIDI IN on the TRS jack */
+#endif
+#endif
+#if BOARD_SMK37 && OM_TRS
+#error "BOARD_SMK37: midi_uart.c is the FM-1 MIDI IN driver (RX on PH8, a key-matrix row on the SMK)"
 #endif
 #if OM_TRS
 #include "midi_uart.c"
@@ -78,6 +96,9 @@ static int st_prog(uint32_t off, const void *src, uint32_t n)
         return -8;
     return fl_write(off, src, n);
 }
+#if BOARD_SMK37
+#define ST_IDLE() fm1_wdt_feed()  /* (storage.c: between the erases of a store take-over) */
+#endif
 #include "storage.c"
 
 struct bootguard_s { uint32_t magic, failed, pending; };

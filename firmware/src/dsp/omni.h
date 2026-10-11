@@ -17,6 +17,9 @@
  * and only read elsewhere. Float only, no libm: fastmath.h. */
 #pragma once
 #include <stdint.h>
+#ifndef BOARD_SMK37
+#define BOARD_SMK37 0                  /* 1: the M-Vave SMK-37 Pro build (FoMni37; tools/build.py --board smk37) */
+#endif
 
 #define OM_SR 44100.0f
 #define OM_NSTR 16                     /* harp strings: the white keys */
@@ -60,6 +63,12 @@ void om_set(int param, int value);
 void om_chord(int root, int type);             /* the chord the harp, chord and bass play from now on */
 void om_gate(int on);                          /* a chord pad held (1) / released (0): the chord section */
 void om_strum(int string);                     /* pluck string 0..15 */
+#if BOARD_SMK37
+/* FoMni37 (SMK-37 Pro): a pluck with the pad's or key's velocity (1..127; 0 = om_strum's full pluck), and the
+ * wheels: pitch bend in 1/4096 semitone (strings, chord and bass) and the mod wheel's vibrato depth 0..127 */
+void om_strum_vel(int string, int vel);
+void om_perf(int32_t bend_q12, int32_t modw);
+#endif
 void om_play(int on);                          /* the rhythm: start (from its first step) / stop */
 void om_panic(void);                           /* everything quiet, now */
 /* MIDI clock in (the main loop passes it on): OM_CLK_TICK (F8), START, CONTINUE, STOP. While ticks keep

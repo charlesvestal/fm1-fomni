@@ -8,7 +8,8 @@
  *   REC            SYNC START          ARP   CHORD HOLD          OCT- / OCT+   the plate's octave
  *   HOME SEQ FX SEL GLO   the pages: PLAY, RHYTHM, SOUND, CHORDS, SETUP (EDIT steps through them)
  *   SELECT tempo   ALGORITHM rhythm   PRESETS transpose   KNOB 1-4 the page's four values
- *   SAVE           saves (it also saves by itself, a few seconds after a change, when quiet) */
+ *   SAVE           saves (it also saves by itself, a few seconds after a change, when quiet)
+ * FoMni37 (BOARD_SMK37, the M-Vave SMK-37 Pro): the extra controls, below ("SMK-37 Pro"). */
 
 enum { V_PLAY, V_RHYTHM, V_SOUND, V_PADS, V_SETUP, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Play", "Rhythm", "Sound", "Chords", "Setup"};
@@ -210,6 +211,60 @@ static void turn(int role, int k, int32_t e)
     knob_set(k, knob_get(k) + accel(role, e, hi - lo));
 }
 
+#if BOARD_SMK37
+/* ---------------------------------------------------- SMK-37 Pro (FoMni37) --- */
+/* The SMK-37 Pro's controls beyond the FM-1's (plat.h SMK section; the FM-1 ones keep their FoMni meaning):
+ *   pads           the strum plate: the 16 strings with velocity (top row strings 1-8, bottom row 9-16)
+ *   keybed HARP    (default) the middle 27 keys F3..G5 as on the FM-1: white keys pluck the strings, black keys
+ *                  are the 11 chord buttons. An outer key held picks the chord type: C3 minor, D3 7th (both: m7,
+ *                  as CHORD and NOTE REPEAT), E3 maj7, C#3 dim, D#3 aug, A5 sus4, B5 add9, C6 m7
+ *   keybed CHORDS  (KNOB BANK) the Omnichord's chord buttons over the whole keybed: the key's note is the root,
+ *                  C3..B3 major, C4..B4 minor, C5..B5 7th (CHORD / NOTE REPEAT add minor / 7th); C6 lets the
+ *                  chord go. The strings are on the pads only
+ *   FADER BANK     the four faders: A Voice 1, Voice 2, Chord, Drums; B Sustain, Reverb, Chord rev, Space
+ *   < >            the previous / next page
+ *   wheels         pitch bend +-2 semitones and the mod wheel's vibrato (strings, chord and bass) */
+static struct {
+    uint32_t sbtn;                     /* the four extra buttons held (SB_*) */
+    uint64_t kb;                       /* keybed keys held */
+    uint8_t fbank, kdown;              /* fader bank 0 A / 1 B; CHORDS keys down */
+    uint8_t flast[4];                  /* each fader's last value, 0xFF: not read yet (takes over once it moves) */
+} smk;
+static const uint8_t SMK_FADER_PAR[2][4] = {{P_VOICE1, P_VOICE2, P_CHORD, P_RHYVOL},
+                                            {P_SUSTAIN, P_REVERB, P_CREV, P_SPACE}};
+static void smk_reset(void)
+{
+    memset(&smk, 0, sizeof smk);
+    memset(smk.flast, 0xFF, sizeof smk.flast);
+}
+/* HARP: the chord type an outer key held picks, -1 none (keybed C3 = 0 .. C6 = 36) */
+static int smk_type(void)
+{
+    uint64_t k = smk.kb;
+    if (proj.keybed & 1u)
+        return -1;
+    if ((k & 5u) == 5u)
+        return CH_M7;                              /* C3 + D3 */
+    if (k & 1u)
+        return CH_MIN;                             /* C3 */
+    if (k >> 2 & 1u)
+        return CH_7;                               /* D3 */
+    if (k >> 4 & 1u)
+        return CH_MAJ7;                            /* E3 */
+    if (k >> 1 & 1u)
+        return CH_DIM;                             /* C#3 */
+    if (k >> 3 & 1u)
+        return CH_AUG;                             /* D#3 */
+    if (k >> 33 & 1u)
+        return CH_SUS4;                            /* A5 */
+    if (k >> 35 & 1u)
+        return CH_ADD9;                            /* B5 */
+    if (k >> 36 & 1u)
+        return CH_M7;                              /* C6 */
+    return -1;
+}
+#endif
+
 /* ------------------------------------------------------------- chords --- */
 static void sound_chord(void) { om_chord(ui.root, ui.type); }
 
@@ -220,6 +275,13 @@ static void pad_down(int p)
     int mods = (b >> B_ENV & 1u) | (b >> B_LFO & 1u) << 1;
     if (mods)                                    /* the OM's rows: minor, 7th, both: m7 */
         type = mods == 1 ? CH_MIN : mods == 2 ? CH_7 : CH_M7;
+#if BOARD_SMK37
+    {
+        int t = smk_type();                      /* an outer key held (HARP) */
+        if (t >= 0)
+            type = t;
+    }
+#endif
     if (mods & 1)
         ui.btn_used |= 1u << B_ENV;
     if (mods & 2)
@@ -416,10 +478,161 @@ static void midi_in(void)
         kb_update();
 }
 
+#if BOARD_SMK37
+/* CHORDS keybed: key k (0 = C3) pressed / let go */
+static void smk_chord_down(int k)
+{
+    uint32_t b = ui.btn;
+    int root = k % 12, row = k / 12, minor, sev, type;
+    if (row > 2) {                               /* C6: let the chord go (also a held one) */
+        if (ui.pad != -1) {
+            om_gate(0);
+            ui.pad = -1;
+        }
+        return;
+    }
+    minor = row == 1 || (b >> B_ENV & 1u);
+    sev = row == 2 || (b >> B_LFO & 1u);
+    type = minor && sev ? CH_M7 : minor ? CH_MIN : sev ? CH_7 : CH_MAJ;
+    if (b >> B_ENV & 1u)
+        ui.btn_used |= 1u << B_ENV;
+    if (b >> B_LFO & 1u)
+        ui.btn_used |= 1u << B_LFO;
+    if (proj.hold && ui.pad == -3 && !smk.kdown && ui.root == root && ui.type == type) {
+        ui.pad = -1;                             /* HOLD: the sounding chord again lets it go */
+        om_gate(0);
+        smk.kdown++;
+        return;
+    }
+    smk.kdown++;
+    ui.pad = -3;                                 /* a chord from the keybed: no chord button lit */
+    ui.root = (uint8_t)root;
+    ui.type = (uint8_t)type;
+    sound_chord();
+    om_gate(1);
+    if (ui.armed) {                              /* SYNC START */
+        ui.armed = 0;
+        om_play(1);
+    }
+}
+static void smk_chord_up(int k)
+{
+    if (k / 12 > 2)
+        return;
+    if (smk.kdown)
+        smk.kdown--;
+    if (smk.kdown || proj.hold)
+        return;
+    if (ui.pad == -3) {
+        om_gate(0);
+        ui.pad = -1;
+    }
+}
+
+/* the SMK's controls, each input pass: *keys gets the note keys the FM-1 code sees (CHORDS: the pads only),
+ * *hits the strings plucked since the last pass (latched edges: a quick strum is never lost) */
+static void smk_input(uint32_t *keys, uint32_t *hits)
+{
+    uint32_t sb = plat_smk_buttons(), sp = sb & ~smk.sbtn, nh = plat_note_hits(), ph = plat_pad_hits(), i;
+    uint64_t kb = plat_keybed(), kh = plat_keybed_hits();
+    int32_t bend, modw;
+    smk.sbtn = sb;
+    if (sp >> SB_KNOB_BANK & 1u) {               /* KNOB BANK: the keybed HARP / CHORDS */
+        proj.keybed = (uint8_t)!(proj.keybed & 1u);
+        smk.kdown = 0;
+        if (ui.pad < -2 && !proj.hold) {         /* a keybed chord sounding: let it go */
+            om_gate(0);
+            ui.pad = -1;
+        }
+        say("KEYBED", proj.keybed ? "CHORDS" : "HARP");
+        mark_dirty();
+    }
+    if (sp >> SB_FADER_BANK & 1u) {              /* FADER BANK: A levels / B sound */
+        smk.fbank ^= 1u;
+        memset(smk.flast, 0xFF, sizeof smk.flast);
+        say("FADER BANK", smk.fbank ? "B SOUND" : "A LEVELS");
+    }
+    if (sp >> SB_LEFT & 1u)
+        set_view((ui.view + NVIEWS - 1) % NVIEWS);
+    if (sp >> SB_RIGHT & 1u)
+        set_view((ui.view + 1) % NVIEWS);
+    if (proj.keybed & 1u) {                      /* CHORDS: every key a chord button */
+        int k;
+        for (k = 0; k < SMK_NKEYBED; k++) {
+            int was = (int)(smk.kb >> k & 1u), now = (int)(kb >> k & 1u), hit = (int)(kh >> k & 1u);
+            if (was && (hit || !now))
+                smk_chord_up(k);
+            if (hit) {
+                smk_chord_down(k);
+                if (!now)                         /* pressed and let go between two passes */
+                    smk_chord_up(k);
+            }
+        }
+        *keys = plat_pad_notes();
+        *hits = ph;
+    } else {
+        *hits = nh;                               /* keybed white keys and pads */
+    }
+    smk.kb = kb;
+    if (sb || kb || ph || nh)
+        ui.act_t = plat_ms();
+    for (i = 0; i < 4u; i++) {                   /* the faders: a parameter each, once a fader moves */
+        int v = plat_fader((int)i), k = SMK_FADER_PAR[smk.fbank][i], lo, hi;
+        char t[16];
+        if (v < 0)
+            continue;
+        if (smk.flast[i] == 0xFFu) {
+            smk.flast[i] = (uint8_t)v;
+            continue;
+        }
+        if (v == smk.flast[i])
+            continue;
+        smk.flast[i] = (uint8_t)v;
+        knob_range(k, &lo, &hi);
+        knob_set(k, lo + (v * (hi - lo) + 63) / 127);
+        knob_text(k, t);
+        say(knob_name(k), t);
+        ui.act_t = plat_ms();
+    }
+    if (plat_wheels(&bend, &modw))
+        om_perf(bend, modw);
+}
+
+/* the pads' LEDs: each string lights while it rings (the harp colour); at rest the roots glow, as the plate's
+ * dots on the screen. Lights Off: dark. */
+static void smk_pads(void)
+{
+    int s, root = ((ui.root + proj.par[P_TRANSPOSE]) % 12 + 12) % 12;
+    for (s = 0; s < OM_NSTR; s++) {
+        uint32_t r = 0, g = 0, b = 0, q;
+        if (proj.leds) {
+            if (om_str_note[s] % 12 == root) {
+                r = 28;
+                g = 10;
+                b = 4;
+            }
+            q = (uint32_t)(om_str_level[s] * 160.0f);
+            if (q > 160u)
+                q = 160u;
+            if (q > 4u && (242u * q >> 8) > r) {
+                r = 242u * q >> 8;
+                g = 120u * q >> 8;
+                b = 72u * q >> 8;
+            }
+        }
+        plat_pad_rgb(s, (uint8_t)r, (uint8_t)g, (uint8_t)b);
+    }
+}
+#endif
+
 static void input(void)
 {
     uint32_t btn = plat_buttons(), keys = plat_keys(), ch, i;
     int32_t e;
+#if BOARD_SMK37
+    uint32_t hits;
+    smk_input(&keys, &hits);
+#endif
     ch = btn ^ ui.btn;
     ui.btn = btn;
     for (i = 0; i < NB; i++) {
@@ -436,9 +649,15 @@ static void input(void)
     }
     ch = keys ^ ui.keys;
     ui.keys = keys;
+#if BOARD_SMK37
+    for (i = 0; i < OM_NSTR; i++)              /* strings first, with the key's or the pad's velocity */
+        if (hits >> WHITE_K[i] & 1u)
+            om_strum_vel((int)i, plat_key_vel(WHITE_K[i]));
+#else
     for (i = 0; i < OM_NSTR; i++)              /* strings first: a strum is the fastest thing here */
         if ((ch & keys) >> WHITE_K[i] & 1u)
             om_strum((int)i);
+#endif
     for (i = 0; i < NPADS; i++)
         if (ch >> BLACK_K[i] & 1u) {
             if (keys >> BLACK_K[i] & 1u)
@@ -740,6 +959,10 @@ static void leds(void)
                 k |= 1u << WHITE_K[i];
     }
     plat_glow(proj.leds == 1);
+#if BOARD_SMK37
+    plat_smk_leds((proj.keybed & 1u) << SB_KNOB_BANK | (uint32_t)smk.fbank << SB_FADER_BANK);
+    smk_pads();
+#endif
     plat_leds(b, k);
 }
 
@@ -764,6 +987,9 @@ static void autosave(void)
 void ui_init(void)
 {
     memset(&ui, 0, sizeof ui);
+#if BOARD_SMK37
+    smk_reset();
+#endif
     ui.pad = -1;
     ui.touched = -1;
     ui.root = proj.pad_root[1];                  /* C, the second button */

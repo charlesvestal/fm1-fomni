@@ -7,7 +7,11 @@ static const char *const B_NAME[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO",
                                         "ARP", "SEQ", "PLAY", "REC", "OCT-", "OCT+"};
 static const char *const E_NAME[NE] = {"SELECT", "ALGORITHM", "PRESETS", "KNOB 1", "KNOB 2",
                                         "KNOB 3", "KNOB 4"};
+#if BOARD_SMK37
+#define PANEL_MAGIC 0x464D5331u          /* "FMS1" (FoMni37, SMK-37 Pro): never an FM-1 table; bump when PANEL_DEFAULT changes */
+#else
 #define PANEL_MAGIC 0x50414E35u          /* "PAN5": Felucca's layout, so its calibration stays valid */
+#endif
 
 typedef struct {
     uint32_t magic;
@@ -17,20 +21,35 @@ typedef struct {
 } panel_t;
 panel_t panel __attribute__((section(".noinit")));
 
+#if BOARD_SMK37
+/* SMK-37 Pro (smk_input.h button ids, confirmed on a unit; the printed SMK label -> the FM-1 function):
+ * FX = FX, SCALE = SEL, CHORD = ENV (minor), NOTE REPEAT = LFO (7th), PARA = EDIT, GLOBE = GLO, PATCH = HOME,
+ * BT = SAVE, ARP, SEQ as printed, SEQ PLAY = PLAY, SEQ REC = REC, OCTAVE- / + as printed. KNOB BANK, FADER BANK,
+ * < and > are FoMni37's own (ui.c). Knobs as the FM-1's top row: K1 = MASTER (smk_input.h: a virtual pot),
+ * K2 = SELECT, K3 = ALGORITHM, K4 = PRESETS; K5..K8 = KNOB 1..4. HARDWARE CALIBRATION (OCTAVE- + OCTAVE+ at
+ * power-on) re-teaches all of it. */
+static const panel_t PANEL_DEFAULT = {
+    PANEL_MAGIC,
+    {14, 8, 9, 7, 13, 10, 12, 11, 6, 15, 16, 17, 4, 5},
+    {1, 2, 3, 4, 5, 6, 7},
+    {1, 1, 1, 1, 1, 1, 1},
+};
+#else
 static const panel_t PANEL_DEFAULT = {
     PANEL_MAGIC,
     {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0, 1},
     {0, 1, 6, 2, 3, 4, 5},
     {1, 1, 1, 1, 1, 1, 1},
 };
+#endif
 
 static int panel_valid(const panel_t *p)
 {
     uint32_t i, ok = p->magic == PANEL_MAGIC;
     for (i = 0; ok && i < NB; i++)
-        ok = p->btn[i] < 14u;
+        ok = p->btn[i] < FM1_NBTN;
     for (i = 0; ok && i < NE; i++)
-        ok = p->enc[i] < 7u && (p->dir[i] == 1 || p->dir[i] == -1);
+        ok = p->enc[i] < FM1_NENC && (p->dir[i] == 1 || p->dir[i] == -1);
     return (int)ok;
 }
 
@@ -68,7 +87,7 @@ static void panel_setup(void)
             if (fm1_ms - t0 > SETUP_IDLE_MS)
                 goto timeout;
         }
-        for (id = 0; id < 14u; id++)
+        for (id = 0; id < FM1_NBTN; id++)
             if (((p & ~used) >> id) & 1u)
                 break;
         panel.btn[i] = (uint8_t)id;
@@ -80,17 +99,17 @@ static void panel_setup(void)
         int32_t st = 0;
         draw_text_box(0, 80, 240, &FONT_S, "TURN RIGHT", C_GRAY, 1);
         draw_text_box(0, 100, 240, &FONT_L, E_NAME[i], C_WHITE, 1);
-        for (e = 0; e < 7u; e++)
+        for (e = 0; e < FM1_NENC; e++)
             fm1_enc_take(e);
         t0 = fm1_ms;
         for (;;) {
             fm1_wdt_feed();
             if (fm1_ms - t0 > SETUP_IDLE_MS)
                 goto timeout;
-            for (e = 0; e < 7u; e++)
+            for (e = 0; e < FM1_NENC; e++)
                 if (!((used >> e) & 1u) && (st = fm1_enc_take(e)) != 0)
                     break;
-            if (e < 7u)
+            if (e < FM1_NENC)
                 break;
         }
         panel.enc[i] = (uint8_t)e;

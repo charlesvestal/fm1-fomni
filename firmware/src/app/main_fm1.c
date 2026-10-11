@@ -250,6 +250,12 @@ static void splash(void)
         cv_text((240 - w) / 2, 42, &FONT_S, SPLASH_LINE, RGB(150, 136, 118));
     }
     cv_blit(0, 92);
+#if BOARD_SMK37
+    cv_begin(240, FONT_XS.h, RGB(250, 244, 232));      /* the port credit, small and dim, near the bottom */
+    cv_text((240 - text_w(&FONT_XS, "SMK-37 port by genkigenki")) / 2, 0, &FONT_XS, "SMK-37 port by genkigenki",
+            RGB(196, 186, 170));
+    cv_blit(0, 218);
+#endif
     lcd_sync();
 }
 

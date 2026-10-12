@@ -207,10 +207,15 @@ export class Updater {
     return s2;
   }
 
-  // resume: the device is already in update mode (loader) -> true when the write finished
-  async resume(image, onStep) {
+  // resume: the device is already in update mode (loader) -> true when the write finished. product: the
+  // package's identity; the loader's model must match it (an SMK-37 Pro's loader never gets an FM-1 image)
+  async resume(image, onStep, product = "") {
     const ota = await this.find(IS_OTA);
     if (!ota) return false;
+    if (ota.id.model.replace(/^ota-/i, "") !== product.split("_")[0]) {
+      ota.link.close();
+      throw fail("model", `the device is in the update mode of ${ota.id.text}, the package is for ${product || "an unknown model"}`, ota.id.text);
+    }
     return (await this.write(ota, image, onStep || (() => {}))).finished;
   }
 }

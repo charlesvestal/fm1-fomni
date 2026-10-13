@@ -21,7 +21,7 @@
 #endif
 
 #if BOARD_SMK37
-/* ---- SMK-37 Pro flash map (see the fm1-to-smk37 guide) ----
+/* ---- SMK-37 Pro flash map (hardware notes: https://github.com/genkigenki/fm1-to-smk37) ----
  *   0x00000-0x03FFF  head (SPL, isd_config)         NEVER
  *   0x04000-0x9CFFF  app area (stock PRCT end)      update loader only (FL_APP)
  *   0x9D000-0xBAFFF  VM: FoMni's store (project, panel; owner tag 0xAF000)        FL_DATA

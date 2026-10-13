@@ -18,7 +18,7 @@
 #pragma once
 #include <stdint.h>
 #ifndef BOARD_SMK37
-#define BOARD_SMK37 0                  /* 1: the M-Vave SMK-37 Pro build (FoMni37; tools/build.py --board smk37) */
+#define BOARD_SMK37 0                  /* 1: the M-Vave SMK-37 Pro build (tools/build.py --board smk37) */
 #endif
 
 #define OM_SR 44100.0f
@@ -64,7 +64,7 @@ void om_chord(int root, int type);             /* the chord the harp, chord and 
 void om_gate(int on);                          /* a chord pad held (1) / released (0): the chord section */
 void om_strum(int string);                     /* pluck string 0..15 */
 #if BOARD_SMK37
-/* FoMni37 (SMK-37 Pro): a pluck with the pad's or key's velocity (1..127; 0 = om_strum's full pluck), and the
+/* The SMK-37 build: a pluck with the pad's or key's velocity (1..127; 0 = om_strum's full pluck), and the
  * wheels: pitch bend in 1/4096 semitone (strings, chord and bass) and the mod wheel's vibrato depth 0..127 */
 void om_strum_vel(int string, int vel);
 void om_perf(int32_t bend_q12, int32_t modw);

@@ -49,7 +49,7 @@ uint32_t plat_cpu_pct(void);
 uint32_t plat_xruns(void);
 
 #if defined(BOARD_SMK37) && BOARD_SMK37
-/* FoMni37: the M-Vave SMK-37 Pro's extra controls (plat_fm1.c over hal/smk_input.h). plat_keys() above is
+/* The SMK-37 build: the M-Vave SMK-37 Pro's extra controls (plat_fm1.c over hal/smk_input.h). plat_keys() above is
  * the FM-1's 27 note keys: keybed F3..G5 or a pad (the pads are the 16 white keys = the 16 strings). */
 #define SMK_NKEYBED 37                 /* C3 .. C6 */
 enum { SB_KNOB_BANK, SB_FADER_BANK, SB_LEFT, SB_RIGHT, NSB };   /* the four buttons the FM-1 has not */

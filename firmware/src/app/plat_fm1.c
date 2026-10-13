@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* OMNI platform on the FM-1: plat.h over Felucca's HAL, panel map, USB rings and storage
- * (FoMni37: and on the SMK-37 Pro, over hal/smk_input.h).
+ * (the SMK-37 build: and on the SMK-37 Pro, over hal/smk_input.h).
  * Part of the unity build (omni.c), after the HAL, usb.c, storage.c and panel.c. */
 
 uint32_t plat_ms(void) { return fm1_ms; }
@@ -27,7 +27,7 @@ static volatile uint32_t master_q12 = 2048;
 uint32_t plat_master(void) { return master_q12; }
 
 #if BOARD_SMK37
-/* ---- SMK-37 Pro (FoMni37): hal/smk_input.h. Button LEDs: one flag per button id (no dim level, so no glow);
+/* ---- SMK-37 Pro (the SMK-37 build): hal/smk_input.h. Button LEDs: one flag per button id (no dim level, so no glow);
  * the note keys have no LEDs: the pads show the strings (plat_pad_rgb, lcd.c padled_*) */
 static void led_pos_init(void) {}
 void plat_glow(int on) { (void)on; }

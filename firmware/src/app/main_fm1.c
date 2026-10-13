@@ -233,10 +233,8 @@ static void safe_main(void)
 }
 
 #if BOARD_SMK37
-#define SPLASH_NAME "FoMni37"
 #define SPLASH_LINE "A chord harp for the SMK-37 Pro"
 #else
-#define SPLASH_NAME "FoMni"
 #define SPLASH_LINE "A chord harp for the FM-1"
 #endif
 static void splash(void)
@@ -244,18 +242,12 @@ static void splash(void)
     lcd_fill(0, 0, 240, 240, RGB(250, 244, 232));
     cv_begin(240, 64, RGB(250, 244, 232));
     {
-        int32_t w = text_w(&FONT_L, SPLASH_NAME);
-        cv_text((240 - w) / 2, 0, &FONT_L, SPLASH_NAME, RGB(242, 120, 72));
+        int32_t w = text_w(&FONT_L, "FoMni");
+        cv_text((240 - w) / 2, 0, &FONT_L, "FoMni", RGB(242, 120, 72));
         w = text_w(&FONT_S, SPLASH_LINE);
         cv_text((240 - w) / 2, 42, &FONT_S, SPLASH_LINE, RGB(150, 136, 118));
     }
     cv_blit(0, 92);
-#if BOARD_SMK37
-    cv_begin(240, FONT_XS.h, RGB(250, 244, 232));      /* the port credit, small and dim, near the bottom */
-    cv_text((240 - text_w(&FONT_XS, "SMK-37 port by genkigenki")) / 2, 0, &FONT_XS, "SMK-37 port by genkigenki",
-            RGB(196, 186, 170));
-    cv_blit(0, 218);
-#endif
     lcd_sync();
 }
 

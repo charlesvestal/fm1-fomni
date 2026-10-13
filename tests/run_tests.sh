@@ -26,7 +26,7 @@ run uac sh -c "$CC -O2 -w -Ifirmware/src -Ifirmware/hal -o $OUT/uac_test tests/h
 run trs sh -c "$CC -O2 -w -Ifirmware/src -Ifirmware/hal -o $OUT/trs_test tests/host/trs_test.c && $OUT/trs_test"
 run omni sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wdouble-promotion -Werror -DOM_HOST -Ifirmware/src/dsp \
     -o $OUT/omni_test tests/host/omni_test.c firmware/src/dsp/omni.c && $OUT/omni_test"
-# FoMni37: the instrument as the SMK-37 Pro build compiles it (velocity and wheel hooks in; same results)
+# The SMK-37 build: the instrument as it compiles it (velocity and wheel hooks in; same results)
 run omni-smk37 sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wdouble-promotion -Werror -DOM_HOST -DBOARD_SMK37=1 \
     -Ifirmware/src/dsp -o $OUT/omni_test_smk tests/host/omni_test.c firmware/src/dsp/omni.c && $OUT/omni_test_smk"
 run storage sh -c "$CC -O2 -o $OUT/storage_test tests/storage_test.c && $OUT/storage_test"
@@ -41,7 +41,7 @@ if [ -f build/omni.fwsc ]; then
         $CC -o $OUT/ldr_test tests/ldr_test.c && $OUT/ldr_test $OUT/old.fwsc build/omni.fwsc"
     fi
     run installer python3 tests/install_test.py
-    # FoMni37, SMK-37 Pro (BOARD_SMK37): the flash map and store owner, the package layout, the OTA staging and
+    # The SMK-37 build (BOARD_SMK37): the flash map and store owner, the package layout, the OTA staging and
     # the loader windows, on SMK-layout packages made here from the FM-1 binaries (layout and protocol under test)
     run smk37-flash sh -c "$CC -O2 -Wall -DBOARD_SMK37=1 -Ifirmware/hal -o $OUT/smk_flash_test tests/smk_flash_test.c && \
         $OUT/smk_flash_test"

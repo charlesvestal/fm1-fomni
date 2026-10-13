@@ -8,9 +8,9 @@
 Outputs in build/: omni.bin (app), loader/ota.bin (update loader, Felucca's, unchanged),
 omni.fwsc (package). See BUILDING.md for the toolchain and the SDK.
 
-BOARD=smk37 (or --board smk37) builds FoMni37 for the M-Vave SMK-37 Pro: -DBOARD_SMK37=1 for the app and
+BOARD=smk37 (or --board smk37) builds FoMni for the M-Vave SMK-37 Pro: -DBOARD_SMK37=1 for the app and
 the loader, identity SMK-37 Pro_800 (release SMK-37 Pro_8XXYYZZ), the SMK flash layout (fm1pkg_make.py), and
-the package build/fomni37.fwsc (fomni37-X.Y.fwsc for a release). The default stays the FM-1.
+the package build/fomni-smk37.fwsc (fomni-smk37-X.Y.fwsc for a release). The default stays the FM-1.
 
 The JieLi toolchain is Linux x86-64 only. JIELI_TOOLCHAIN points at it; on
 macOS (or with JIELI_DOCKER=1) each tool runs in a linux/amd64 container.
@@ -59,7 +59,7 @@ PRODUCT = "FM-1_800"                # package identity; release builds are FM-1_
 BOARD = "fm1"                       # fm1 (default) or smk37: BOARD env or --board
 BOARD_PREFIX = {"fm1": "FM-1_8", "smk37": "SMK-37 Pro_8"}   # identity of a release build: prefix + XXYYZZ
 BOARD_DEFS = {"fm1": [], "smk37": ["-DBOARD_SMK37=1"]}       # the FM-1 build gets no new flag (byte-identical)
-BOARD_STEM = {"fm1": "omni", "smk37": "fomni37"}             # package name
+BOARD_STEM = {"fm1": "omni", "smk37": "fomni-smk37"}             # package name
 VERSION = None                      # FELUCCA_VERSION for release builds (default: firmware/src/ui.c)
 
 

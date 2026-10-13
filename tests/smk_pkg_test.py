@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""An SMK-37 Pro package from fm1pkg_make.py --board smk37 (FoMni37): flash.bin is the stock PRCT size
-(0x9D000) and its app area carries the stock v016 region table exactly (see the fm1-to-smk37 guide), so the
+"""An SMK-37 Pro package from fm1pkg_make.py --board smk37: flash.bin is the stock PRCT size
+(0x9D000) and its app area carries the stock v016 region table exactly, so the
 SDK and a later stock rollback see the same VM / BTIF / USRTRIM / USRFLASH / USR regions.
   smk_pkg_test.py PACKAGE.fwsc [PRODUCT]"""
 import struct

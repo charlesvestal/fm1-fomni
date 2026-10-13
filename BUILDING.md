@@ -56,7 +56,7 @@ MIDI interface).
 BOARD=smk37 ./build.sh            # or: ./build.sh --board smk37
 ```
 
-builds `build/fomni37.fwsc` (identity `SMK-37 Pro_800`; `--release X.Y` gives `fomni37-X.Y.fwsc`,
+builds `build/fomni-smk37.fwsc` (identity `SMK-37 Pro_800`; `--release X.Y` gives `fomni-smk37-X.Y.fwsc`,
 `SMK-37 Pro_8XXYYZZ`). Everything for the SMK-37 Pro sits behind `BOARD_SMK37` (`-DBOARD_SMK37=1` for the
 app and the update loader); without `BOARD` the FM-1 build is byte-identical to upstream FoMni. Options for
 the SMK build: `OM_LCD_BAUD=0..15` (the LCD SPI divider; default 1 = 30 MHz, 4 = the stock firmware's

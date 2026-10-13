@@ -8,7 +8,7 @@ static const char *const B_NAME[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO",
 static const char *const E_NAME[NE] = {"SELECT", "ALGORITHM", "PRESETS", "KNOB 1", "KNOB 2",
                                         "KNOB 3", "KNOB 4"};
 #if BOARD_SMK37
-#define PANEL_MAGIC 0x464D5331u          /* "FMS1" (FoMni37, SMK-37 Pro): never an FM-1 table; bump when PANEL_DEFAULT changes */
+#define PANEL_MAGIC 0x464D5331u          /* "FMS1" (the SMK-37 build): never an FM-1 table; bump when PANEL_DEFAULT changes */
 #else
 #define PANEL_MAGIC 0x50414E35u          /* "PAN5": Felucca's layout, so its calibration stays valid */
 #endif
@@ -25,7 +25,7 @@ panel_t panel __attribute__((section(".noinit")));
 /* SMK-37 Pro (smk_input.h button ids, confirmed on a unit; the printed SMK label -> the FM-1 function):
  * FX = FX, SCALE = SEL, CHORD = ENV (minor), NOTE REPEAT = LFO (7th), PARA = EDIT, GLOBE = GLO, PATCH = HOME,
  * BT = SAVE, ARP, SEQ as printed, SEQ PLAY = PLAY, SEQ REC = REC, OCTAVE- / + as printed. KNOB BANK, FADER BANK,
- * < and > are FoMni37's own (ui.c). Knobs as the FM-1's top row: K1 = MASTER (smk_input.h: a virtual pot),
+ * < and > are the SMK-37 build's own (ui.c). Knobs as the FM-1's top row: K1 = MASTER (smk_input.h: a virtual pot),
  * K2 = SELECT, K3 = ALGORITHM, K4 = PRESETS; K5..K8 = KNOB 1..4. HARDWARE CALIBRATION (OCTAVE- + OCTAVE+ at
  * power-on) re-teaches all of it. */
 static const panel_t PANEL_DEFAULT = {

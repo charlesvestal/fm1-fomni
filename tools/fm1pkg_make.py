@@ -17,7 +17,7 @@ All integrity checks in the format are CRC16 (poly 0x1021, init 0).
   fm1pkg_make.py APP.bin OTA.bin OUT.fwsc [--board fm1|smk37] [--product FM-1_9XY] [--sdk DIR]
 
 --board smk37 (M-Vave SMK-37 Pro, same AC791N, SPL and loader) selects the SMK flash layout: PRCT
-0x9D000 and the stock v016 region table (VM, BTIF, USRTRIM, USRFLASH, USR; see the fm1-to-smk37 guide).
+0x9D000 and the stock v016 region table (VM, BTIF, USRTRIM, USRFLASH, USR).
 """
 import argparse
 import os
@@ -34,7 +34,7 @@ REGIONS = {
             (0, None, 0x92, 0x82, 0, bytes.fromhex("5052435400ffffffffffffff434f4445")),         # PRCT = FLASH_SIZE
             (0xE9000, 0x1000, 0x92, 0x80, 0, bytes.fromhex("4254494600ffffffffffffff4155544f")),  # BTIF
             (0xEA000, 0x12000, 0x92, 0x81, 1, "USR")],
-    # SMK-37 Pro v016, exactly as the stock package's region table (see the fm1-to-smk37 guide)
+    # SMK-37 Pro v016, exactly as the stock package's region table
     "smk37": [(0x9D000, 0x23000, 0x12, 0x81, 0, bytes.fromhex("564d00ffffffffffffffffff00800000")),    # VM
               (0, None, 0x92, 0x82, 0, bytes.fromhex("5052435400ffffffffffffff434f4445")),        # PRCT = FLASH_SIZE
               (0xC0000, 0x1000, 0x92, 0x82, 0, bytes.fromhex("4254494600ffffffffffffff4155544f")), # BTIF

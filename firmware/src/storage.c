@@ -47,7 +47,7 @@ static uint32_t st_crc32(const void *p, uint32_t n)   /* zlib CRC-32, 4 bits per
 }
 
 #if BOARD_SMK37
-/* SMK-37 Pro (see the fm1-to-smk37 guide): the objects in FL_DATA 0x9D000..0xBAFFF (the stock VM), A/B
+/* SMK-37 Pro: the objects in FL_DATA 0x9D000..0xBAFFF (the stock VM), A/B
  * neighbours: the project 0x9D000 / 0x9E000, the panel calibration 0x9F000 / 0xA0000. Never near BTIF /
  * USRTRIM (0xC0000..0xC1FFF) or key_mac (0xFF000). */
 #define ST_SMK_BASE 0x9D000u

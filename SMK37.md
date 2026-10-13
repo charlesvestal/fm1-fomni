@@ -48,7 +48,7 @@ The SMK-37's TRS jack is a MIDI output and this build does not use it; there is 
 See [BUILDING.md](BUILDING.md) for the toolchain.
 
 ```sh
-BOARD=smk37 ./build.sh     # build/fomni37.fwsc
+BOARD=smk37 ./build.sh     # build/fomni-smk37.fwsc
 ```
 
 Without `BOARD`, the FM-1 build is unchanged.
@@ -58,7 +58,7 @@ Without `BOARD`, the FM-1 build is unchanged.
 Connect the keyboard by USB and run:
 
 ```sh
-python3 tools/fm1_install.py build/fomni37.fwsc
+python3 tools/fm1_install.py build/fomni-smk37.fwsc
 ```
 
 `fm1_install.py` needs `mido` and `python-rtmidi` (`pip3 install mido python-rtmidi`). It checks that the package

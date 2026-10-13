@@ -5,9 +5,9 @@
  * The FM-1 counterpart is fm1_input.h + fm1_adc.h; this header keeps their API (fm1_in, fm1_input_init,
  * fm1_input_tick, fm1_input_scan, fm1_enc_take, fm1_input_edges, fm1_input_note_edges, fm1_led_key) so
  * the UI code compiles unchanged, and adds the SMK's extras (velocity, pads, faders, wheels).
- * FoMni37: plus latched press edges of the pads and of the whole keybed (smk_pad_edges, smk_keybed_edges),
+ * The SMK-37 build: plus latched press edges of the pads and of the whole keybed (smk_pad_edges, smk_keybed_edges),
  * so a quick strum across the pads is never lost while the main loop waits for the screen.
- * Hardware (stock v016; see the fm1-to-smk37 guide):
+ * Hardware (stock v016; hardware notes: https://github.com/genkigenki/fm1-to-smk37):
  *
  *  - 4 x 74HC595 (32 bits) shifted by SPI2 group C (PA3 CLK, PA4 DO; IOMAP_CON1 bit17), latched by
  *    PA1, PA0 low (/OE). Word bits 31..16: column select, active-low one-hot (col 0..7 = bits 31..24,
@@ -117,8 +117,8 @@ static volatile struct {
     uint32_t buttons;            /* debounced: bit i = button i (0..17) */
     uint32_t pressed, released;  /* button edges since the last fm1_input_edges() */
     uint32_t notes_pressed;      /* note-key press edges since the last fm1_input_note_edges() */
-    uint32_t pnotes_pressed;     /* (FoMni37) pad press edges, as note bits, since the last smk_pad_edges() */
-    uint64_t keys_pressed;       /* (FoMni37) keybed press edges (bit k = key k) since the last smk_keybed_edges() */
+    uint32_t pnotes_pressed;     /* pad press edges, as note bits, since the last smk_pad_edges() */
+    uint64_t keys_pressed;       /* keybed press edges (bit k = key k) since the last smk_keybed_edges() */
     uint64_t keys;               /* all 37 keybed keys: bit k = key k (0 = lowest C) */
     uint8_t key_vel[FM1_NKEY];   /* MIDI velocity 1..127 of each key's last press (a pad: its white key's) */
     uint8_t raw[FM1_NCOL];       /* last frame, rows packed, 1 = closed */
@@ -637,7 +637,7 @@ static uint32_t fm1_input_note_edges(void)
     return p;
 }
 
-/* (FoMni37) pad press edges since the last call, as note bits (0 = F3; the pads are the white keys) */
+/* pad press edges since the last call, as note bits (0 = F3; the pads are the white keys) */
 static uint32_t smk_pad_edges(void)
 {
     uint32_t k = fm1__lock();
@@ -647,7 +647,7 @@ static uint32_t smk_pad_edges(void)
     return p;
 }
 
-/* (FoMni37) keybed press edges since the last call: bit k = keybed key k (0 = C3 .. 36 = C6) */
+/* keybed press edges since the last call: bit k = keybed key k (0 = C3 .. 36 = C6) */
 static uint64_t smk_keybed_edges(void)
 {
     uint32_t k = fm1__lock();

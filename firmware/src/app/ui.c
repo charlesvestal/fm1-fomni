@@ -9,7 +9,7 @@
  *   HOME SEQ FX SEL GLO   the pages: PLAY, RHYTHM, SOUND, CHORDS, SETUP (EDIT steps through them)
  *   SELECT tempo   ALGORITHM rhythm   PRESETS transpose   KNOB 1-4 the page's four values
  *   SAVE           saves (it also saves by itself, a few seconds after a change, when quiet)
- * FoMni37 (BOARD_SMK37, the M-Vave SMK-37 Pro): the extra controls, below ("SMK-37 Pro"). */
+ * The SMK-37 build (BOARD_SMK37, the M-Vave SMK-37 Pro): the extra controls, below ("SMK-37 Pro"). */
 
 enum { V_PLAY, V_RHYTHM, V_SOUND, V_PADS, V_SETUP, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Play", "Rhythm", "Sound", "Chords", "Setup"};
@@ -212,7 +212,7 @@ static void turn(int role, int k, int32_t e)
 }
 
 #if BOARD_SMK37
-/* ---------------------------------------------------- SMK-37 Pro (FoMni37) --- */
+/* -------------------------------------------------------------- SMK-37 Pro --- */
 /* The SMK-37 Pro's controls beyond the FM-1's (plat.h SMK section; the FM-1 ones keep their FoMni meaning):
  *   pads           the strum plate: the 16 strings with velocity (top row strings 1-8, bottom row 9-16)
  *   keybed HARP    (default) the middle 27 keys F3..G5 as on the FM-1: white keys pluck the strings, black keys

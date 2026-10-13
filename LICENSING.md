@@ -14,6 +14,7 @@ your recipients its complete corresponding source under the same licence.
 | Rhythm patterns, single-cycle waves, drum sounds, envelope shapes and the strum plate's voicing (`firmware/src/dsp/om_data.h`, `om_drums.h`, made by `tools/import_chordian.py`) | [Chordian](https://github.com/Jan125/pb.chordian) by Jan125, an OM-84 emulator | CC0 1.0 (public domain) |
 | The idea of a browser emulator for FM-1 firmware (`web/emu/`) | [Groove OS](https://www.groove-os.com/) by Peter Gombos, whose site runs its firmware in the browser; no code from it | credit only |
 | Everything else in `firmware/src/{app,dsp}`, `tests/` | FoMni | GPL-3.0-only |
+| The M-VAVE SMK-37 Pro port: `firmware/hal/smk_input.h`, `firmware/hal/fm1_flash_map.h`, the code behind `BOARD_SMK37`, `tests/smk_*` | the SMK-37 board layer, adapted for FoMni (authors in the files' headers) | GPL-3.0-only |
 
 ## Third-party material
 
@@ -27,7 +28,7 @@ your recipients its complete corresponding source under the same licence.
 
 Omnichord is a trademark of Suzuki Musical Instrument Corporation, used here only to say what
 inspired FoMni. "Felucca" and "Hügelton Instruments" are names of Hügelton Instruments.
-"M-VAVE" and "FM-1" are trademarks of their respective owners. FoMni is independent firmware; it is
+"M-VAVE", "FM-1" and "SMK-37 Pro" are trademarks of their respective owners. FoMni is independent firmware; it is
 not affiliated with, endorsed by or supported by any of them.
 
 ## Radio

@@ -47,3 +47,21 @@ enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 /* audio load in % of the render budget, and xruns since boot (device: from the ISR) */
 uint32_t plat_cpu_pct(void);
 uint32_t plat_xruns(void);
+
+#if defined(BOARD_SMK37) && BOARD_SMK37
+/* The SMK-37 build: the M-Vave SMK-37 Pro's extra controls (plat_fm1.c over hal/smk_input.h). plat_keys() above is
+ * the FM-1's 27 note keys: keybed F3..G5 or a pad (the pads are the 16 white keys = the 16 strings). */
+#define SMK_NKEYBED 37                 /* C3 .. C6 */
+enum { SB_KNOB_BANK, SB_FADER_BANK, SB_LEFT, SB_RIGHT, NSB };   /* the four buttons the FM-1 has not */
+uint32_t plat_smk_buttons(void);       /* held: bit SB_* */
+void plat_smk_leds(uint32_t lit);      /* their LEDs, bit SB_* (before plat_leds) */
+uint32_t plat_note_hits(void);         /* note-key presses since the last call, keybed or pad: bit k (0 = F3) */
+uint32_t plat_pad_hits(void);          /* pad presses since the last call, as note-key bits */
+uint32_t plat_pad_notes(void);         /* pads held, as note-key bits */
+uint64_t plat_keybed(void);            /* keybed keys held: bit k = key k (0 = C3) */
+uint64_t plat_keybed_hits(void);       /* keybed presses since the last call */
+int plat_key_vel(int k);               /* velocity 1..127 of note key k's last press (keybed or pad) */
+int plat_fader(int i);                 /* fader 0..3: 0..127, -1 while the readings settle */
+int plat_wheels(int32_t *bend_q12, int32_t *modw);   /* 1 = new values: bend 1/4096 semitone, mod 0..127 */
+void plat_pad_rgb(int string, uint8_t r, uint8_t g, uint8_t b);   /* the LED of string 0..15's pad */
+#endif

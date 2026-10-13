@@ -109,6 +109,33 @@ void om_strum(int s) { post(C_STRUM, s, 0); }
 void om_play(int on) { post(C_PLAY, on, 0); }
 void om_panic(void) { post(C_PANIC, 0, 0); }
 void om_clock(int msg) { post(C_CLOCK, msg, 0); }
+#if BOARD_SMK37
+void om_strum_vel(int s, int vel) { post(C_STRUM, s, vel < 0 ? 0 : vel > 127 ? 127 : vel); }
+/* the wheels (main loop -> render): read once per block; a torn read only lasts one block */
+static volatile int32_t perf_bend, perf_modw;
+void om_perf(int32_t bend_q12, int32_t modw)
+{
+    perf_bend = bend_q12;
+    perf_modw = modw < 0 ? 0 : modw > 127 ? 127 : modw;
+}
+static float pmul = 1.0f, vib_ph;              /* the pitch factor of this block; the vibrato's phase (0..1) */
+static int pluck_vel;                          /* the velocity of the pluck being started (0 = full) */
+#define VIB_HZ 5.5f                            /* the mod wheel's vibrato: rate, and the depth at full */
+#define VIB_SEMI 0.5f
+static void perf_block(uint32_t n)
+{
+    float semis = (float)perf_bend * (1.0f / 4096.0f);
+    int32_t mw = perf_modw;
+    vib_ph += VIB_HZ * (float)n * (1.0f / OM_SR);
+    while (vib_ph >= 1.0f)
+        vib_ph -= 1.0f;
+    if (mw) {                                  /* a triangle, -1..1 */
+        float tri = vib_ph < 0.5f ? 4.0f * vib_ph - 1.0f : 3.0f - 4.0f * vib_ph;
+        semis += tri * VIB_SEMI * (float)mw * (1.0f / 127.0f);
+    }
+    pmul = semis == 0.0f ? 1.0f : fm_exp2f(semis * (1.0f / 12.0f));
+}
+#endif
 
 /* -------------------------------------------------------------- state --- */
 volatile float om_str_level[OM_NSTR];
@@ -173,7 +200,11 @@ static void strum(int s)
         midi(0x80, v->note, 0);
     if (v->on)
         midi(0x80, n, 0);
+#if BOARD_SMK37
+    midi(0x90, (uint32_t)n, pluck_vel ? (uint32_t)pluck_vel : 100u);
+#else
     midi(0x90, (uint32_t)n, 100);
+#endif
     if (!v->on) {
         v->y1 = v->y2 = 0.0f;
         v->g = 0.0f;
@@ -181,7 +212,13 @@ static void strum(int s)
     v->on = 1;
     v->note = (uint8_t)n;
     v->inc = note_inc(n);
+#if BOARD_SMK37
+    /* the velocity: a softer pluck starts lower on its envelope, so it is quieter and (the voice filter follows
+     * the envelope) darker, as a plucked string is */
+    v->v = pluck_vel ? 0.3f + 0.7f * (float)pluck_vel * (1.0f / 127.0f) : 1.0f;
+#else
     v->v = 1.0f;
+#endif
     /* the voice filter: Chordian's per-note brightness, darker as the note decays */
     base = fm_maxf(((18.0f - u) / 18.0f) * 0.31f + 0.34f, 0.05f);
     v->k = fm_powf(base, 2.85f);
@@ -550,6 +587,9 @@ static void drain(void)
             }
             break;
         case C_STRUM:
+#if BOARD_SMK37
+            pluck_vel = b;
+#endif
             if (a < OM_NSTR)
                 strum(a);
             break;
@@ -593,7 +633,11 @@ static void render_strings(uint32_t n)
     for (s = 0; s < OM_NSTR; s++) {
         str_t *v = &str[s];
         float pos = v->pos, y1 = v->y1, y2 = v->y2, e = v->v, g = v->g, c = v->c, m = v->m;
+#if BOARD_SMK37
+        const float inc = v->inc * pmul, gl = pan_l[s], gr = pan_r[s];
+#else
         const float inc = v->inc, gl = pan_l[s], gr = pan_r[s];
+#endif
         uint32_t j;
         if (!v->on) {
             om_str_level[s] = 0.0f;
@@ -694,7 +738,11 @@ static void render_chord(uint32_t n)
             mixl[j] += o;
             mixr[j] += o;
             send[j] += o * csend;
+#if BOARD_SMK37
+            v->pos = adv(v->pos, v->inc * pmul);
+#else
             v->pos = adv(v->pos, v->inc);
+#endif
         }
         lvl = fm_maxf(lvl, v->v);
     }
@@ -708,7 +756,11 @@ static void render_chord(uint32_t n)
             mixl[j] += o;
             mixr[j] += o;
             send[j] += o * csend * 0.5f;               /* a little: a wet bass muddies */
+#if BOARD_SMK37
+            v->pos = adv(v->pos, v->inc * pmul);
+#else
             v->pos = adv(v->pos, v->inc);
+#endif
         }
     }
     om_bass_level = bsv.st != E_OFF ? bsv.v : 0.0f;
@@ -743,6 +795,9 @@ static void render_chunk(int32_t *out, uint32_t n, float gain)
     uint32_t j;
     for (j = 0; j < n; j++)
         mixl[j] = mixr[j] = send[j] = 0.0f;
+#if BOARD_SMK37
+    perf_block(n);
+#endif
     render_strings(n);
     render_chord(n);
     render_drums(n);

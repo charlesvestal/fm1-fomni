@@ -50,6 +50,22 @@ connections when many containers start at once.
 Build option: `OM_CDC=1` adds Felucca's USB serial function (off by default: one plain
 MIDI interface).
 
+### The M-VAVE SMK-37 Pro
+
+```
+BOARD=smk37 ./build.sh            # or: ./build.sh --board smk37
+```
+
+builds `build/fomni-smk37.fwsc` (identity `SMK-37 Pro_800`; `--release X.Y` gives `fomni-smk37-X.Y.fwsc`,
+`SMK-37 Pro_8XXYYZZ`). `MODEL=elite` or `MODEL=mke` builds the same firmware under the SMK-37 Elite's or the
+MKE-P37's model name (`build/fomni-smk37-elite.fwsc`, identity `SMK-37 Elite_800`; `build/fomni-smk37-mke.fwsc`,
+`MKE-P37_800`), so M-Vave's updater still takes that unit's factory package; the Starrykey 37 Play uses the Pro
+build. Everything for the SMK-37 Pro sits behind `BOARD_SMK37` (`-DBOARD_SMK37=1` for the
+app and the update loader); without `BOARD` the FM-1 build is byte-identical to upstream FoMni. Options for
+the SMK build: `OM_LCD_BAUD=0..15` (the LCD SPI divider; default 1 = 30 MHz, 4 = the stock firmware's
+12 MHz), `FELUCCA_DATA_FAMILY` / `FELUCCA_DATA_UNTAGGED_OK` (the store owner tag; keep the defaults `FOMNI`
+and `0`). On Windows, build in WSL2 (Ubuntu): the toolchain then runs natively, without Docker.
+
 The build also generates `build/gen/` (the font). It fails if a soft-double routine is linked
 (a `double` crept in) and checks the image, RAM and pool sizes.
 
@@ -59,7 +75,8 @@ The build also generates `build/gen/` (the font). It fails if a soft-double rout
 tests/run_tests.sh
 ```
 
-Runs, on the build machine: the maths library against libm; the instrument (`tests/host/omni_test.c`:
+Runs, on the build machine (after an FM-1 `./build.sh`, with `AC79_SDK` set for the update-path and
+SMK-37 Pro package tests): the maths library against libm; the instrument (`tests/host/omni_test.c`:
 the strum plate's voicing against the OM-108 manual, envelopes, rhythm timing, levels); flash
 storage; Felucca's update-path tests against `build/omni.fwsc`; and the whole app in the simulator
 (`tests/scenarios/*.omni`), with its screenshots and audio in `build/scenarios/`.

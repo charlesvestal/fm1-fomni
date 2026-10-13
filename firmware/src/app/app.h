@@ -20,7 +20,12 @@ typedef struct {
     uint8_t hold;                        /* CHORD HOLD: the chord keeps playing after its button is let go */
     uint8_t sync;                        /* SYNC START: the rhythm starts with the first chord */
     uint8_t leds;                        /* lights: 0 off, 1 keys and the buttons' glow, 2 keys only */
+#if BOARD_SMK37
+    uint8_t keybed;                      /* the SMK-37 build: 0 HARP (the FM-1's layout), 1 CHORDS (ui.c) */
+    uint8_t rsv[12];
+#else
     uint8_t rsv[13];                     /* room to grow: an older, shorter project loads (zeros here) */
+#endif
 } project_t;
 
 extern project_t proj;

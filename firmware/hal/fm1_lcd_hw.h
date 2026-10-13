@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
- * SMK-37 Pro wiring: M. Geisler (makkuro) <mcgeisler@gmail.com> */
+ * SMK-37 Pro wiring: M. Geisler (genkigenki/makkuro) <mcgeisler@gmail.com> */
 /* LCD wiring, SPI1. The panel protocol is src/lcd.c.
  *
  * FM-1:       SPI1 group B (IOMAP_CON1 bit4 = 1): PC9 CLK, PC10 DO; PC7 CS, PC8 D/C;

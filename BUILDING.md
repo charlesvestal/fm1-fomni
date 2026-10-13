@@ -57,7 +57,10 @@ BOARD=smk37 ./build.sh            # or: ./build.sh --board smk37
 ```
 
 builds `build/fomni-smk37.fwsc` (identity `SMK-37 Pro_800`; `--release X.Y` gives `fomni-smk37-X.Y.fwsc`,
-`SMK-37 Pro_8XXYYZZ`). Everything for the SMK-37 Pro sits behind `BOARD_SMK37` (`-DBOARD_SMK37=1` for the
+`SMK-37 Pro_8XXYYZZ`). `MODEL=elite` or `MODEL=mke` builds the same firmware under the SMK-37 Elite's or the
+MKE-P37's model name (`build/fomni-smk37-elite.fwsc`, identity `SMK-37 Elite_800`; `build/fomni-smk37-mke.fwsc`,
+`MKE-P37_800`), so M-Vave's updater still takes that unit's factory package; the Starrykey 37 Play uses the Pro
+build. Everything for the SMK-37 Pro sits behind `BOARD_SMK37` (`-DBOARD_SMK37=1` for the
 app and the update loader); without `BOARD` the FM-1 build is byte-identical to upstream FoMni. Options for
 the SMK build: `OM_LCD_BAUD=0..15` (the LCD SPI divider; default 1 = 30 MHz, 4 = the stock firmware's
 12 MHz), `FELUCCA_DATA_FAMILY` / `FELUCCA_DATA_UNTAGGED_OK` (the store owner tag; keep the defaults `FOMNI`

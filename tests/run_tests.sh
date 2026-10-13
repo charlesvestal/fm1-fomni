@@ -52,6 +52,12 @@ if [ -f build/omni.fwsc ]; then
         $OUT/smk_new.fwsc >/dev/null && python3 tests/smk_pkg_test.py $OUT/smk_new.fwsc"
     run smk37-ota-entry sh -c "$CC -DBOARD_SMK37=1 -o $OUT/ota_test_smk tests/ota_test.c && \
         $OUT/ota_test_smk $OUT/smk_new.fwsc"
+    for m in 1 2; do                     # the MODEL=elite / mke builds of ota.c
+        run smk37-ota-entry-model$m sh -c "$CC -DBOARD_SMK37=1 -DT_MODEL=$m -o $OUT/ota_test_smk_m$m tests/ota_test.c && \
+            $OUT/ota_test_smk_m$m $OUT/smk_new.fwsc"
+    done
+    [ -f build/fomni-smk37-elite.fwsc ] && run smk37-build-package-elite python3 tests/smk_pkg_test.py build/fomni-smk37-elite.fwsc "SMK-37 Elite_800"
+    [ -f build/fomni-smk37-mke.fwsc ] && run smk37-build-package-mke python3 tests/smk_pkg_test.py build/fomni-smk37-mke.fwsc "MKE-P37_800"
     run smk37-update-loader sh -c "head -c 100000 build/omni.bin > $OUT/old_app.bin && \
         python3 tools/fm1pkg_make.py --board smk37 $OUT/old_app.bin build/loader/ota.bin $OUT/smk_old.fwsc >/dev/null && \
         $CC -DBOARD_SMK37=1 -o $OUT/ldr_test_smk tests/ldr_test.c && $OUT/ldr_test_smk $OUT/smk_old.fwsc $OUT/smk_new.fwsc"

@@ -20,6 +20,7 @@ Exit codes: 0 done, 1 cancelled or other error, 2 bad arguments or package,
 loader / no restart), 6 wrong model, or another identity after the install.
 """
 import argparse
+import hashlib
 import queue
 import re
 import sys
@@ -31,14 +32,22 @@ FINISH_CHECK, FINISH_WRITE = 0xE0000000, 0xF0000000
 MAXDATA = 512
 BLOCKS, BLK, KEEP = 20, 0x30, 0x2F
 LOADER_MARK = b"FELUCCA-LOADER-1"
-PORT_RE = re.compile(r"fm-1|felucca|ota|composite|sinco|usb-midi", re.I)   # never probe other gear
+PORT_RE = re.compile(r"fm-?1|felucca|ota|composite|sinco|usb-midi", re.I)   # never probe other gear
 
 # seconds; the tests shorten them
 DELAY = {"open": 0.3, "start": 2.0, "reply": 0.01, "loader": 3.0, "reboot": 3.0, "retry": 1.0,
          "poll": 1.0, "hs": 1.0, "idle_check": 8.0, "idle_write": 180.0,
          "wait_loader": 30.0, "wait_reboot": 40.0}
 
-EXIT = {"usage": 2, "badpkg": 2, "notfound": 3, "model": 6, "lost": 4, "stopped": 4, "badreq": 4,
+# M-VAVE's FM1 Open firmware (V10, 2026-10): its updater takes only a package it has been told about
+# first (cmd 49 reads its state, cmd 50 arms it with the image length and the package's SHA-256); then
+# the update runs as usual. Only M-VAVE's FM-1 V15 is installed over it: its loader rewrites the whole
+# flash, boot head included, which returns the FM-1 to stock.
+OPEN_RE = re.compile(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)")
+STOCK = "FM-1_015"
+STOCK_SHA256 = "db1642b2b6fa5c2cccb11ffd13878068bb28601678d3644049f99dc40e7edb8a"
+
+EXIT = {"usage": 2, "badpkg": 2, "notfound": 3, "model": 6, "open": 6, "lost": 4, "stopped": 4, "badreq": 4,
         "noloader": 5, "noreturn": 5, "mismatch": 6}
 
 
@@ -99,6 +108,10 @@ class Identity:
         self.text, self.model, self.version = text, model, version
 
     @property
+    def open(self):
+        return OPEN_RE.fullmatch(self.text) is not None
+
+    @property
     def loader(self):
         return self.model.lower().startswith("ota-")
 
@@ -110,6 +123,8 @@ def parse_identity(pkt):
     if len(d) != 34 or d[:3] != b"\x00\x59\x11":
         return None
     txt = d[6:33].rstrip(b"\0").decode("latin-1")
+    if OPEN_RE.fullmatch(txt):
+        return Identity(txt, "FM-1", 0)
     m = re.fullmatch(r"([^_]+)_(\d+)", txt)
     return Identity(txt, m[1], int(m[2])) if m else None
 
@@ -211,6 +226,30 @@ def pair_output(name, outs):
 
 
 # --------------------------------------------------------------- updater ---
+
+def frame(cmd, payload=b""):
+    """an M-UPGRADE command: F0 pack7(00 59 cmd len16 00 payload ~sum) F7"""
+    n = len(payload)
+    return b"\xF0" + pack7(bytes([0, 0x59, cmd, n & 0xFF, n >> 8, 0]) + bytes(payload) + bytes([~sum(payload) & 0xFF])) + b"\xF7"
+
+
+def query(link, cmd, payload=b""):
+    """send a command, -> the payload of its reply, or None"""
+    link.drain()
+    if not link.send(frame(cmd, payload)):
+        return None
+    end = time.monotonic() + DELAY["hs"] * 1.5
+    while (left := end - time.monotonic()) > 0:
+        p = link.read(left)
+        if p is None:
+            break
+        if len(p) < 2 or p[0] != 0xF0 or p[-1] != 0xF7:
+            continue
+        u = unpack7(p[1:-1])
+        if len(u) >= 7 and u[:3] == bytes([0, 0x59, cmd]) and sum(u[6:]) & 0xFF == 0xFF:
+            return u[6:6 + int.from_bytes(u[3:5], "little")]
+    return None
+
 
 class Device:
     def __init__(self, link, ident, name):
@@ -348,12 +387,31 @@ class Updater:
         step("done", back.id.text)
         return back.id.text
 
-    def install(self, dev, image, product, step=lambda *a: None):
+    def arm(self, dev, image, product, digest):
+        """M-VAVE's Open firmware: allow the update of stock V15 (and nothing else)"""
+        if product != STOCK or digest != bytes.fromhex(STOCK_SHA256):
+            dev.link.close()
+            raise InstallError("open", f"the FM-1 runs M-VAVE's {dev.id.text} firmware: put the stock firmware "
+                                       "back first (M-VAVE's FM-1 V15, FM-1.fwsc), then install this")
+        cap = query(dev.link, 49)
+        if not cap or len(cap) != 47 or cap[:4] != b"FMC1" or cap[6] != 0:
+            dev.link.close()
+            raise InstallError("stopped", f"{dev.id.text} did not accept the update (state "
+                                          f"{cap.hex() if cap else 'no reply'}); nothing was written")
+        ack = query(dev.link, 50, bytes([1, cap[5]]) + len(image).to_bytes(4, "little") + digest)
+        if ack != b"\0":
+            dev.link.close()
+            raise InstallError("stopped", f"{dev.id.text} refused the package ({ack.hex() if ack else 'no reply'}); "
+                                          "nothing was written")
+
+    def install(self, dev, image, product, step=lambda *a: None, digest=None):
         """running firmware -> loader -> new firmware; dev from find(). A device already in
         update mode only needs the write."""
-        if model_of(dev.id.text) != model_of(product):
+        if model_of(dev.id.text) != model_of(product) and not dev.id.open:
             dev.link.close()
             raise InstallError("model", f"the device is {dev.id.text}, the package is for {product}")
+        if dev.id.open:
+            self.arm(dev, image, product, digest)
         ota = dev if dev.id.loader else self.check(dev, image, step)
         self.write(ota, image, step)
         return self.verify(product, step)
@@ -369,10 +427,11 @@ def load_package(path, force):
     product = product_of(raw)
     if not re.fullmatch(r"[^_]+_\d+", product):
         raise InstallError("badpkg", f"{path}: not an FM-1 package (identity {product!r})")
-    if LOADER_MARK not in raw and not force:
+    digest = hashlib.sha256(raw).digest()
+    if LOADER_MARK not in raw and not force and digest != bytes.fromhex(STOCK_SHA256):
         raise InstallError("badpkg", f"{path}: no Felucca update loader in this package; "
-                                     "only Felucca's own packages are installed (--force overrides)")
-    return product, logical_image(raw)
+                                     "only Felucca's own packages and M-VAVE's FM-1 V15 are installed (--force overrides)")
+    return product, logical_image(raw), digest
 
 
 def not_found(up):
@@ -417,7 +476,7 @@ def run(a, backend, out, ask):
         mode = "update loader (update not finished)" if dev.id.loader else "running"
         print(f"{dev.id.text}  [{mode}]  port: {dev.name}", file=out)
         return 0
-    product, image = load_package(a.package, a.force)
+    product, image, digest = load_package(a.package, a.force)
     print(f"package: {product}  ({a.package})", file=out)
     dev = up.find()
     if not dev:
@@ -430,7 +489,7 @@ def run(a, backend, out, ask):
         return 1
     prog = Progress(out)
     try:
-        up.install(dev, image, product, prog)
+        up.install(dev, image, product, prog, digest)
     finally:
         prog.end()
     return 0

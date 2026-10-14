@@ -12,6 +12,14 @@ const MAXDATA = 512;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const IS_OTA = (id) => /^ota-/i.test(id.model);
 
+// M-VAVE's FM1 Open firmware (V10, 2026-10): its updater takes only a package it has been told about
+// first (cmd 49 reads its state, cmd 50 arms it with the image length and the package's SHA-256); then
+// the update runs as usual. Only M-VAVE's FM-1 V15 is installed over it (the pages check that file's
+// SHA-256): its loader rewrites the whole flash, boot head included, which returns the FM-1 to stock.
+const OPEN_RE = /^FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)$/;
+const STOCK = "FM-1_015";
+const STOCK_SHA256 = "db1642b2b6fa5c2cccb11ffd13878068bb28601678d3644049f99dc40e7edb8a";
+
 // errors carry a code the pages translate: notfound, model, stopped, noloader, lost, noreturn,
 // mismatch (detail: the identity the device reports), badreq
 function fail(code, msg, detail = "") { const e = new Error(msg); e.code = code; e.detail = detail; return e; }
@@ -60,6 +68,7 @@ function parseIdentity(pkt) {
   const d = unpack7(pkt.slice(1, -1));
   if (d.length !== 34 || d[0] !== 0 || d[1] !== 0x59 || d[2] !== 0x11) return null;
   const txt = String.fromCharCode(...d.slice(6, 33)).replace(/\0+$/, "");
+  if (OPEN_RE.test(txt)) return { text: txt, model: "FM-1", version: 0, open: true };
   const m = /^([^_]+)_(\d+)$/.exec(txt);
   return m ? { text: txt, model: m[1], version: parseInt(m[2], 10) } : null;
 }
@@ -107,6 +116,30 @@ async function handshake(link, tries = 3) {
   return null;
 }
 
+function frame(cmd, payload = []) {
+  let s = 0;
+  for (const b of payload) s += b;
+  return [0xF0, ...pack7([0x00, 0x59, cmd, payload.length & 0xFF, payload.length >> 8, 0, ...payload, ~s & 0xFF]), 0xF7];
+}
+
+// send a command -> the payload of its reply, or null
+async function query(link, cmd, payload = []) {
+  link.drain();
+  if (!link.send(frame(cmd, payload))) return null;
+  const end = Date.now() + 1500;
+  while (Date.now() < end) {
+    const p = await link.read(end - Date.now());
+    if (!p) break;
+    if (p[0] !== 0xF0 || p[p.length - 1] !== 0xF7) continue;
+    const u = unpack7(p.slice(1, -1));
+    if (u.length < 7 || u[0] !== 0 || u[1] !== 0x59 || u[2] !== cmd) continue;
+    let s = 0;
+    for (let i = 6; i < u.length; i++) s += u[i];
+    if ((s & 0xFF) === 0xFF) return u.slice(6, 6 + (u[3] | (u[4] << 8)));
+  }
+  return null;
+}
+
 export class Updater {
   constructor(access, log) {
     this.access = access;
@@ -118,7 +151,7 @@ export class Updater {
     const outs = [...this.access.outputs.values()];
     for (const input of this.access.inputs.values()) {
       if (input.state === "disconnected") continue;
-      if (!/fm-1|felucca|ota|composite|sinco|usb-midi/i.test(input.name || "")) continue;   // never probe other gear
+      if (!/fm-?1|felucca|ota|composite|sinco|usb-midi/i.test(input.name || "")) continue;   // never probe other gear
       const output = outs.find((o) => o.name === input.name) || (outs.length === 1 ? outs[0] : null);
       if (!output) continue;
       try { await input.open(); await output.open(); } catch (_) { continue; }
@@ -176,6 +209,7 @@ export class Updater {
     if (!dev) throw fail("notfound", "FM-1 not found (USB cable, and no other app using it?)");
     const [model] = product.split("_");
     if (dev.id.model !== model) { dev.link.close(); throw fail("model", `the device is ${dev.id.text}, the package is for ${product}`); }
+    if (dev.id.open) await this.arm(dev, image, product);
     step("start", dev.id.text);
     dev.link.send(UPGRADE);
     await sleep(2000);
@@ -196,6 +230,26 @@ export class Updater {
     if (back.id.text !== product) throw fail("mismatch", `installed, but the device reports ${back.id.text}`, back.id.text);
     step("done", back.id.text);
     return back.id.text;
+  }
+
+  // M-VAVE's Open firmware: allow the update of stock V15 (and nothing else)
+  async arm(dev, image, product) {
+    if (product !== STOCK) {
+      dev.link.close();
+      throw fail("open", `This FM-1 runs M-VAVE's ${dev.id.text} firmware. Put the stock firmware back first ("Back to the stock firmware"), then install this.`, dev.id.text);
+    }
+    const cap = await query(dev.link, 49);
+    if (!cap || cap.length !== 47 || String.fromCharCode(...cap.slice(0, 4)) !== "FMC1" || cap[6] !== 0) {
+      dev.link.close();
+      throw fail("stopped", `${dev.id.text} did not accept the update: nothing was written`);
+    }
+    const n = image.length;
+    const tag = STOCK_SHA256.match(/../g).map((h) => parseInt(h, 16));
+    const ack = await query(dev.link, 50, [1, cap[5], n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF, ...tag]);
+    if (!ack || ack.length !== 1 || ack[0] !== 0) {
+      dev.link.close();
+      throw fail("stopped", `${dev.id.text} refused the package: nothing was written`);
+    }
   }
 
   // step 2 with the loader found by find()/waitFor()

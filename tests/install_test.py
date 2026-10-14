@@ -67,8 +67,9 @@ class FakeFM1:
     """a MIDI backend with one FM-1 on it"""
 
     def __init__(self, image, identity="FM-1_015", name="FM-1", unplug_after=None, after_write="FM-1_900",
-                 stall_after=None, bad_addr=None):
+                 stall_after=None, bad_addr=None, refuse_arm=False):
         self.image, self.unplug_after, self.after_write = image, unplug_after, after_write
+        self.refuse_arm, self.armed, self.arms = refuse_arm, False, []
         self.stall_after, self.bad_addr = stall_after, bad_addr
         self.served = self.bad = self.upgrades = 0
         self.sent, self.links, self.gen, self.lock = [], [], 0, threading.Lock()
@@ -98,10 +99,16 @@ class FakeFM1:
                 link.q.put(bytes(pkt))
 
     def rx(self, d):
+        u = I.unpack7(d[1:-1])
+        if self.identity.startswith("FM1_") and len(u) >= 7 and u[:2] == b"\x00\x59" and u[2] in (49, 50):
+            self.open_cmd(u[2], u[6:-1])        # M-VAVE's Open firmware: state, arm
+            return
         if d == I.HS_QUERY:
             t = self.identity.encode()
             self.tx(b"\xF0" + I.pack7(bytes([0, 0x59, 0x11, 0, 0, 0]) + t + bytes(28 - len(t))) + b"\xF7")
         elif d == I.UPGRADE:
+            if self.identity.startswith("FM1_") and not self.armed:
+                return                          # Open ignores an update it was not armed for
             self.upgrades += 1
             first = self.bad_addr if self.bad_addr is not None else 0
             self.queue = ([(first + k * 512, 512) for k in range(6)] + [(I.FINISH_WRITE, 8)]
@@ -128,6 +135,16 @@ class FakeFM1:
                 threading.Timer(0.05, self.boot, (self.after_write, "Felucca")).start()
             else:
                 self.next()
+
+    def open_cmd(self, cmd, data):
+        if cmd == 49:
+            out = b"FMC1" + bytes([1, 7, 0, 1]) + (512).to_bytes(2, "little") + (1 << 20).to_bytes(4, "little") + bytes(33)
+        else:
+            self.arms.append(bytes(data))
+            ok_ = len(data) == 38 and data[:2] == bytes([1, 7]) and int.from_bytes(data[2:6], "little") == len(self.image)
+            self.armed = ok_ and not self.refuse_arm
+            out = b"\0" if self.armed else b"\x01"
+        self.tx(b"\xF0" + I.pack7(bytes([0, 0x59, cmd, len(out), 0, 0]) + out + bytes([~sum(out) & 0xFF])) + b"\xF7")
 
     def next(self):
         if not self.queue:
@@ -268,6 +285,34 @@ def errors():
     ok(rc == 2, "missing file -> exit 2")
 
 
+def from_open():
+    """M-VAVE's FM1 Open firmware: back to stock V15 only, after arming its updater"""
+    stock_raw = package("FM-1_015", marker=False)
+    stock, ours = pkgfile("FM-1.fwsc", stock_raw), pkgfile("ours.fwsc", package())
+    real = I.STOCK_SHA256
+    I.STOCK_SHA256 = __import__("hashlib").sha256(stock_raw).hexdigest()     # stand-in for the real V15
+    try:
+        image = I.logical_image(stock_raw)
+        dev = FakeFM1(image, identity="FM1_OFFICIAL_OPEN", name="FM1 Community", after_write="FM-1_015")
+        rc, out, err = cli([stock, "--yes"], dev)
+        ok(rc == 0 and dev.bad == 0 and len(dev.arms) == 1 and dev.arms[0][6:] == bytes.fromhex(I.STOCK_SHA256)
+           and "done: the FM-1 runs FM-1_015" in out, "Open -> stock V15: armed (length, SHA-256), no --force needed")
+        dev = FakeFM1(image, identity="FM1_COMMUNITY_3", name="FM1 Community", after_write="FM-1_015")
+        rc, out, err = cli([stock, "--yes"], dev)
+        ok(rc == 0 and len(dev.arms) == 1, "... a community build (FM1_COMMUNITY_n) too")
+        dev = FakeFM1(I.logical_image(package()), identity="FM1_OFFICIAL_OPEN", name="FM1 Community")
+        rc, out, err = cli([ours, "--yes"], dev)
+        ok(rc == 6 and "stock firmware back first" in err and dev.arms == [] and dev.upgrades == 0,
+           "Open -> one of ours: refused, nothing sent (stock first)")
+        dev = FakeFM1(image, identity="FM1_OFFICIAL_OPEN", name="FM1 Community", refuse_arm=True)
+        rc, out, err = cli([stock, "--yes"], dev)
+        ok(rc == 4 and "refused" in err and dev.upgrades == 0, "Open refuses the arming -> exit 4, nothing written")
+        rc, out, err = cli(["--info"], FakeFM1(image, identity="FM1_OFFICIAL_OPEN", name="FM1 Community"))
+        ok(rc == 0 and "FM1_OFFICIAL_OPEN" in out, "--info finds Open on its own port name")
+    finally:
+        I.STOCK_SHA256 = real
+
+
 def against_js():
     clean = ROOT / "build/omni.fwsc"
     if not shutil.which("node") or not clean.exists():
@@ -286,6 +331,7 @@ def against_js():
 wire()
 installs()
 errors()
+from_open()
 against_js()
 shutil.rmtree(TMP, ignore_errors=True)
 print(f"INSTALL TESTS FAILED ({failed})" if failed else "install tests passed")

@@ -57,6 +57,16 @@ MIDI comes in over USB and the TRS jack (the FM-1's jack is an input), and goes 
 - **Out** (on by default, Setup page): the strings on channel 1, the chord on 2, the bass on 3, the drums
   on 10, and clock with start / stop when the rhythm runs on its own tempo.
 
+The drums on channel 10:
+
+| Sound | Note |
+|---|---|
+| Bass drum | 36 |
+| Snare | 38 |
+| Closed hat | 42 |
+| Ride | 51 |
+| Claves | 75 |
+
 ## Building and testing
 
 The toolchain is the same as X0X's (see [BUILDING.md](BUILDING.md)):

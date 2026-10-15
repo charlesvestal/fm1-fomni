@@ -26,7 +26,10 @@ h1 { font: 700 2rem/1.1 "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0
 header p { margin: 0; color: var(--muted); }
 header nav { margin-left: auto; display: flex; gap: 1rem; }
 a { color: var(--accent); }
-.device { position: relative; width: 100%; aspect-ratio: 1000 / 640; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+/* at phone width the drawn panel keeps its controls 24 px or more (WCAG 2.5.8): it keeps a minimum width and
+   scrolls sideways in its own box, not the page */
+.devicebox { overflow-x: auto; overscroll-behavior-x: contain; }
+.device { position: relative; width: 100%; min-width: 560px; aspect-ratio: 1000 / 640; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
 .device svg { pointer-events: none; }
 .hit { position: absolute; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 12px; }
 .hit.knob { cursor: ns-resize; border-radius: 50%; }
@@ -85,11 +88,13 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
 <main>
 <h2 class="sr">The FM-1</h2>
 <p class="turn">Turn your phone sideways for bigger controls.</p>
+<div class="devicebox">
 <div class="device" id="device">
   <svg id="panel" viewBox="0 0 1000 640" aria-hidden="true" focusable="false"></svg>
   <canvas id="screen" width="240" height="240" role="img" aria-label="The FM-1's screen. Its words are read out: see Speak the screen, below the panel"></canvas>
   <div id="controls" role="group" aria-label="The FM-1's panel" aria-describedby="panel-keys" inert></div>
   <div class="start" id="start"><button type="button" id="go">Switch on</button></div>
+</div>
 </div>
 <p id="panel-keys" class="sr">Tab moves through the knobs, the buttons, the chord keys and the strum keys. Arrow keys turn a knob,
   Page Up and Page Down faster. Space or Enter holds a button or key down while you hold it; Shift and Enter keeps a button down

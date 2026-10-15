@@ -4,7 +4,8 @@
 
     gen_words.py firmware/words.tsv web/words build/gen/ann_words.h
 
-words.tsv: the screen's text <TAB> what to say, one a line (# comments). A "# url: https://.../words/" line
+words.tsv: the screen's text <TAB> what to say, one a line ("#" starts a comment, unless the line has a tab: then
+it is an entry, e.g. "# KB<TAB># kilobytes"). A "# url: https://.../words/" line
 says where the words files are published. Written:
   web/words/<id>.json   the firmware's words, then the common ones below: everything the reader needs, frozen.
                         <id> is a fingerprint of the content: the same words, the same file. Keep every one in
@@ -21,7 +22,7 @@ COMMON = [
     ("GLO", "global"), ("OCT+", "octave up"), ("OCT-", "octave down"), ("OCT", "octave"), ("REC", "record"),
     ("SEQ", "sequence"), ("ALGO", "algorithm"), ("ARP", "arp"), ("USB", "U S B"), ("MIDI CH #", "MIDI channel #"),
     ("MIDI", "midi"), ("dB", "decibels"), ("Hz", "hertz"), ("kHz", "kilohertz"), ("ms", "milliseconds"),
-    ("bpm", "B P M"), ("CC", "C C"), ("INF", "infinity"), ("PCT", "percent"), ("2ND", "second"),
+    ("bpm", "B P M"), ("CC #", "controller #"), ("CC", "controller"), ("INF", "infinity"), ("PCT", "percent"), ("2ND", "second"),
     ("FWD", "forward"), ("RND", "random"), ("MEM", "memory"), ("CPU", "C P U"), ("P-LOCK", "p-lock"),
     ("MIN", "minor"), ("MAJ", "major"), ("ATK", "attack"), ("DCY", "decay"), ("SUS", "sustain"),
     ("REL", "release"), ("RES", "resonance"), ("RESO", "resonance"), ("FREQ", "frequency"), ("AMT", "amount"),
@@ -35,8 +36,8 @@ def main(tsv, out_dir, header):
     for n, line in enumerate(Path(tsv).read_text(encoding="utf-8").splitlines(), 1):
         if line.startswith("# url:"):
             url = line.split(":", 1)[1].strip()
-        if not line.strip() or line.startswith("#"):
-            continue
+        if not line.strip() or (line.startswith("#") and "\t" not in line):   # (a line with a tab is an entry,
+            continue                                                         #  even one starting with "#")
         parts = line.split("\t")
         if len(parts) != 2 or not parts[0].strip():
             raise SystemExit(f"{tsv}:{n}: want: screen<TAB>said")

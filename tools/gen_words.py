@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 """A firmware's words file for the screen reader (fm1-reader; copied into each firmware by sync_announce.sh).
 
     gen_words.py firmware/words.tsv web/words build/gen/ann_words.h

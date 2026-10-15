@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Announce: what the screen says, for a screen reader on the computer (fm1-reader: a page that speaks it,
  * or hands it to the computer's own screen reader). Shared by the FM-1 firmwares, one copy:
  * fm1-reader/firmware/announce.c. The app says what changed and when; this keeps the protocol.

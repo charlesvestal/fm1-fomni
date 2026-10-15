@@ -42,6 +42,9 @@ else
     echo "  skip update-path tests (no build/omni.fwsc: run ./build.sh)"
 fi
 run host-build sh host/build_host.sh
+if command -v node >/dev/null 2>&1; then
+    run page-scripts python3 tests/page_script_test.py
+fi
 if command -v emcc >/dev/null 2>&1; then
     run emu sh -c "sh web/emu/build.sh >/dev/null && node tests/host/emu_test.mjs build/emu/omni.wasm"
 fi

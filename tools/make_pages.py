@@ -4,7 +4,8 @@
 
   index.html                    what FoMni-1 is, how it plays, and the ways in: try, install, download, source
   img/                          screenshots (docs/img)
-  emu/                          FoMni-1 in the browser (build/emu, from web/emu/build.sh)
+  emu/                          FoMni-1 in the browser (build/emu, from web/emu/build.sh), with fm1-reader's
+                                words.js and voice in emu/reader/ (the screen in words)
   words/                        the screen reader's words files (web/words, from firmware/words.tsv)
   install/index.html            the web installer (web/omni_installer.html, with fm1pkg.js, fm1ota.js and
                                 the package's metadata inlined; Chrome or Edge, Web MIDI)
@@ -32,17 +33,21 @@ LANDING = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FoMni-1</title>
+<title>FoMni-1 · a chord harp for the FM-1</title>
 <meta name="description" content="A chord harp for the M-VAVE FM-1, inspired by the Suzuki Omnichord: strum the white keys, pick chords on the black ones.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
 <style>
-:root { --ground: #faf4e8; --ink: #48392f; --muted: #8a7764; --rule: #e6dccb; --accent: #e0683a; --teal: #26a69a; --card: #fffaf1; color-scheme: light; }
+/* light: --muted, --accent-ink and --teal darkened just enough for 4.5:1 on the cream; --accent (the bright coral)
+   only for the big title */
+:root { --ground: #faf4e8; --ink: #48392f; --muted: #6e5c4b; --rule: #e6dccb; --accent: #e0683a; --accent-ink: #b84a1e; --teal: #1b776e;
+        --card: #fffaf1; --focus: #1f6fd1; color-scheme: light; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f28a5a; --teal: #4cc3b6; --card: #26201b; color-scheme: dark; }
+  :root:not([data-theme="light"]) { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f28a5a; --accent-ink: #f28a5a; --teal: #4cc3b6; --card: #26201b; --focus: #79adff; color-scheme: dark; }
 }
-:root[data-theme="dark"] { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f28a5a; --teal: #4cc3b6; --card: #26201b; color-scheme: dark; }
+:root[data-theme="dark"] { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f28a5a; --accent-ink: #f28a5a; --teal: #4cc3b6; --card: #26201b; --focus: #79adff; color-scheme: dark; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 body { background: var(--ground); color: var(--ink); margin: 0; padding-inline: 16px; padding-block: 48px 64px;
        font: 400 17px/1.6 "Barlow", "Helvetica Neue", Arial, sans-serif; }
 main { max-width: 42rem; margin: 0 auto; }
@@ -55,14 +60,15 @@ h2 { font: 700 1.4rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 2.2
 .ways { display: grid; gap: 12px; margin: 0 0 1rem; }
 .ways a { display: block; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--rule);
           border-radius: 14px; padding: 14px 18px; }
-.ways a:hover, .ways a:focus-visible { border-color: var(--accent); outline: none; }
-.ways strong { font: 600 1.25rem "Barlow Semi Condensed", "Barlow", sans-serif; color: var(--accent); display: block; }
+.ways a:hover, .ways a:focus-visible { border-color: var(--accent-ink); }
+.ways strong { font: 600 1.25rem "Barlow Semi Condensed", "Barlow", sans-serif; color: var(--accent-ink); display: block; }
 .ways span { color: var(--muted); font-size: .95rem; }
 table { border-collapse: collapse; width: 100%; font-size: .95rem; }
-td { border-top: 1px solid var(--rule); padding: 8px 10px 8px 0; vertical-align: top; }
-td:first-child { font-weight: 600; white-space: nowrap; color: var(--teal); }
+th, td { border-top: 1px solid var(--rule); padding: 8px 10px 8px 0; vertical-align: top; text-align: left; }
+th { font-weight: 600; white-space: nowrap; color: var(--teal); }
 p.small { color: var(--muted); font-size: .9rem; }
-a { color: var(--accent); }
+a { color: var(--accent-ink); }
+footer { max-width: 42rem; margin: 0 auto; }
 code { font-size: .9em; }
 ul.pages { padding-left: 1.2rem; margin: 0 0 1rem; }
 ul.pages li { margin: 0 0 .4rem; }
@@ -80,9 +86,9 @@ ul.pages b { color: var(--teal); }
 keys, run a finger across the white keys, and it rings out. Behind it are an organ-like chord, a bass, and the
 OM-84's ten rhythms, which can play the bass and chord in time.</p>
 <div class="shots">
-  <img src="img/screen-strum.png" width="240" height="240" alt="FoMni-1's screen: the chord C, sixteen strings ringing, the chord buttons below">
-  <img src="img/screen-chord.png" width="240" height="240" alt="FoMni-1's screen: A minor held">
-  <img src="img/screen-rhythm.png" width="240" height="240" alt="FoMni-1's rhythm page: the Rock 1 pattern">
+  <img src="img/screen-strum.png" width="240" height="240" alt="The Play page: the chord C (C E G), its sixteen strings ringing, the eleven chord buttons F to A7 below, then Voice 1 80, Voice 2 45, Sustain 50, Chord 60">
+  <img src="img/screen-chord.png" width="240" height="240" alt="The Play page with A minor held (A C E): its chord button lit, the strings still">
+  <img src="img/screen-rhythm.png" width="240" height="240" alt="The Rhythm page: Rock 1 at 116, its drum pattern as rows of dots over the chord buttons, then Rhythm Rock 1, Tempo 116, Drums 70, Auto bass On">
 </div>
 <div class="status"><strong>Version __VERSION__.</strong> It installs and
 uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own firmware back. Installing is at your own risk.</div>
@@ -93,18 +99,18 @@ uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own fi
   <a href="__REPO__"><strong>Source</strong><span>GitHub, GPL-3.0. Built on Felucca by Hügelton Instruments; sounds and rhythms from Jan125's Chordian.</span></a>
 </nav>
 
-<h2>Playing</h2>
-<table>
-<tr><td>White keys</td><td>The strum plate. Each key plucks a string of the chord: root, third and fifth, folded into an F#–F window, five groups up and a root on top, as on the Omnichord.</td></tr>
-<tr><td>Black keys</td><td>The chord buttons: F C G, Dm Am, Em G7 E7, D7 Bb, A7. Hold ENV for the minor, LFO for the 7th, both for the m7. Change any of them on the Chords page (SEL).</td></tr>
-<tr><td>PLAY · REC</td><td>The rhythm, on and off. REC is sync start: the rhythm waits for your first chord.</td></tr>
-<tr><td>ARP</td><td>Chord hold: the chord keeps going after you let go.</td></tr>
-<tr><td>OCT− · OCT+</td><td>Move the strum plate an octave.</td></tr>
-<tr><td>SELECT</td><td>Tempo.</td></tr>
-<tr><td>ALGORITHM</td><td>Rhythm.</td></tr>
-<tr><td>PRESETS</td><td>Transpose (−6 to +6).</td></tr>
-<tr><td>KNOB 1–4</td><td>The four values on the screen (see the pages below).</td></tr>
-<tr><td>SAVE</td><td>Saves. FoMni-1 also saves by itself a few seconds after a change, once it's quiet.</td></tr>
+<h2 id="playing">Playing</h2>
+<table aria-labelledby="playing">
+<tr><th scope="row">White keys</th><td>The strum plate. Each key plucks a string of the chord: root, third and fifth, folded into an F#–F window, five groups up and a root on top, as on the Omnichord.</td></tr>
+<tr><th scope="row">Black keys</th><td>The chord buttons: F C G, Dm Am, Em G7 E7, D7 Bb, A7. Hold ENV for the minor, LFO for the 7th, both for the m7. Change any of them on the Chords page (SEL).</td></tr>
+<tr><th scope="row">PLAY · REC</th><td>The rhythm, on and off. REC is sync start: the rhythm waits for your first chord.</td></tr>
+<tr><th scope="row">ARP</th><td>Chord hold: the chord keeps going after you let go.</td></tr>
+<tr><th scope="row">OCT− · OCT+</th><td>Move the strum plate an octave.</td></tr>
+<tr><th scope="row">SELECT</th><td>Tempo.</td></tr>
+<tr><th scope="row">ALGORITHM</th><td>Rhythm.</td></tr>
+<tr><th scope="row">PRESETS</th><td>Transpose (−6 to +6).</td></tr>
+<tr><th scope="row">KNOB 1–4</th><td>The four values on the screen (see the pages below).</td></tr>
+<tr><th scope="row">SAVE</th><td>Saves. FoMni-1 also saves by itself a few seconds after a change, once it's quiet.</td></tr>
 </table>
 
 <h2>The pages</h2>
@@ -124,11 +130,17 @@ uninstalls the way Felucca and X0X do, and the installer can put M-VAVE's own fi
   <li><b>In, clock.</b> The rhythm follows MIDI clock and start / stop; the screen shows EXT for the tempo.</li>
   <li><b>Out</b> (on by default, Setup page). The strings on channel 1, the chord on 2, the bass on 3, the drums on 10, and clock with start / stop when the rhythm runs on its own tempo.</li>
 </ul>
+<h2>Screen reader</h2>
+<p>FoMni-1 can say what its screen shows: open the <a href="https://charlesvestal.github.io/fm1-reader/">FM-1 Screen Reader</a>
+in Chrome or Edge with the FM-1 connected by USB, and your own screen reader (or the page's voice) reads the pages, the
+knobs as you turn them, and the chords. <a href="emu/">FoMni-1 in the browser</a> speaks its screen the same way.</p>
+</main>
+<footer>
 <p class="small">To go back to the official
 firmware, use the installer's "Back to the stock firmware", or M-VAVE's updater, M-UPGRADE, from
 <a href="https://www.m-vave.com/download">m-vave.com/download</a>. Omnichord is a trademark of Suzuki; M-VAVE and FM-1 are
 trademarks of their owners. FoMni-1 is not affiliated with any of them.</p>
-</main>
+</footer>
 </body>
 </html>
 """
@@ -162,6 +174,9 @@ def main(pkg, version, out):
     emu = SRC / "build" / "emu"
     if not (emu / "omni.wasm").exists():
         raise SystemExit("no build/emu/omni.wasm: run web/emu/build.sh (needs Emscripten)")
+    if not (emu / "reader" / "words.js").exists():
+        raise SystemExit("no build/emu/reader/: the emulator's screen reader comes from fm1-reader "
+                         "(clone github.com/charlesvestal/fm1-reader next to this repo, or set FM1_READER), then web/emu/build.sh")
     shutil.copytree(emu, out / "emu")
     # the screen reader's words files (fm1-reader): every one ever made, for the devices that point at them
     shutil.copytree(SRC / "web" / "words", out / "words")

@@ -87,4 +87,7 @@ mode. If the FM-1 no longer starts but reaches the chip's update mode (4C4A:8057
 2. `tools/publish_pages.sh X.Y`: builds the site (landing page, browser emulator, web installer,
    firmware) with `tools/make_pages.py` and pushes it to the `gh-pages` branch, which GitHub Pages
    serves at <https://charlesvestal.github.io/fm1-fomni/>.
+   The emulator speaks its screen with [fm1-reader](https://github.com/charlesvestal/fm1-reader)'s
+   `words.js` and voice: clone it next to this repo (or set `FM1_READER` to its `web/` folder).
+   Check the pages with fm1-reader's `tools/a11y/check.mjs build/pages` (its `PAGES.md`).
 3. `gh release create vX.Y build/omni-X.Y.fwsc` for the command-line download.

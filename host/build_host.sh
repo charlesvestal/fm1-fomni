@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 CC="${CC:-cc}"
 mkdir -p build/gen build/host
 [ -f build/gen/felucca_font.h ] || python3 tools/gen_font.py build/gen/felucca_font.h >/dev/null
+python3 tools/gen_words.py firmware/words.tsv web/words build/gen/ann_words.h >/dev/null
 $CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter \
     -DOM_HOST -Ifirmware/src -Ifirmware/src/dsp -Ibuild/gen -o build/host/omni_host host/omni_host.c \
     firmware/src/dsp/omni.c -lm

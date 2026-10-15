@@ -59,9 +59,24 @@ static struct {
     uint32_t sig[3];                   /* what each band shows: redrawn when it changes */
 } ui;
 
-static void say(const char *a, const char *b)
+static uint8_t sp_said;                 /* a message went to the screen reader this frame: speak() leaves it be */
+static void msg_text(const char *a, const char *b, char *t)   /* the message as a reader says it: "a b" */
+{
+    uint32_t i, k = 0;
+    for (i = 0; i < 23u && a && a[i]; i++)
+        t[k++] = a[i];
+    if (b && b[0])
+        t[k++] = ' ';
+    for (i = 0; i < 23u && b && b[i]; i++)
+        t[k++] = b[i];
+    while (k && t[k - 1] == '.')               /* "UPDATE MODE IN 3..": the dots are for the eye */
+        k--;
+    t[k] = 0;
+}
+static void say_as(const char *a, const char *b, uint32_t flags)
 {
     uint32_t i;
+    char t[48];
     for (i = 0; i < 23u && a && a[i]; i++)
         ui.msg[0][i] = a[i];
     ui.msg[0][i] = 0;
@@ -69,7 +84,15 @@ static void say(const char *a, const char *b)
         ui.msg[1][i] = b[i];
     ui.msg[1][i] = 0;
     ui.msg_until = plat_ms() + 1300u;
+    if (ann_on()) {                            /* and to a screen reader (announce.c) */
+        msg_text(a, b, t);
+        ann_say(t, 0, flags);
+        sp_said = 1;
+    }
 }
+static void say(const char *a, const char *b) { say_as(a, b, ANN_NOW); }
+/* something did not happen: a screen reader says it whole (what follows does not cut it off) */
+static void warn(const char *a, const char *b) { say_as(a, b, ANN_NOW | ANN_KEEP); }
 void ui_say(const char *a, const char *b) { say(a, b); }
 
 static void itoa_u(uint32_t v, char *b)
@@ -315,7 +338,7 @@ static void button(int b)
             ui.dirty = 0;
             say("SAVED", 0);
         } else {
-            say("NOT SAVED", "FLASH ERROR");
+            warn("NOT SAVED", "FLASH ERROR");
         }
         break;
     default: break;
@@ -761,6 +784,229 @@ static void autosave(void)
     }
 }
 
+/* ------------------------------------------------------ screen reader --- */
+/* The screen as text for a screen reader on the computer (announce.c; fm1-reader): a page once it settles,
+ * with its knobs; a knob's value as it turns; the chord a button (or MIDI) plays; play and stop; what a
+ * button did (say). WHERE (the reader asks, or it has just started listening) is everything on the screen.
+ * Nothing is built while no reader listens. */
+#define SP_NV (P_NPARAMS + 3)                  /* the values watched: the parameters, the button's root and type, lights */
+static struct {
+    uint32_t ctx;                              /* the page, hashed: a change is said */
+    int32_t chord;                             /* the chord said last: button | root | type, -1 none */
+    int16_t val[SP_NV];
+    int8_t playing, armed;
+    uint8_t started;
+} sp OM_POOL;
+static char sp_buf[ANN_MAX + 1] OM_POOL;
+static uint32_t sp_n;
+/* the chord types in words: the screen's "m" and "M7" differ only in capitals, which the words file ignores */
+static const char *const TYPE_SAID[CH_NTYPES] = {"major", "minor", "7", "major 7", "minor 7", "diminished",
+                                                 "augmented", "suspended 4", "add 9"};
+
+static void sp_cat(const char *s)
+{
+    while (*s && sp_n < ANN_MAX)
+        sp_buf[sp_n++] = *s++;
+    sp_buf[sp_n] = 0;
+}
+static int sp_knob_of(int i) { return i < P_NPARAMS ? i : K_PADROOT + (i - P_NPARAMS); }
+static void sp_knob(int k)                     /* "Voice 1 80", "Type minor 7" */
+{
+    char t[16];
+    sp_cat(knob_name(k));
+    sp_cat(" ");
+    if (k == K_PADTYPE) {
+        sp_cat(TYPE_SAID[knob_get(k)]);
+    } else {
+        knob_text(k, t);
+        sp_cat(t);
+    }
+}
+static void sp_chord(int root, int type)       /* "C# minor 7" (transposed, as the screen shows it) */
+{
+    sp_cat(OM_NOTE_NAME[((root + proj.par[P_TRANSPOSE]) % 12 + 12) % 12]);
+    sp_cat(" ");
+    sp_cat(TYPE_SAID[type]);
+}
+
+/* the page: its name, and its knobs; all: the header and the chord too */
+static void sp_screen(int all)
+{
+    char t[12];
+    int i;
+    sp_n = 0;
+    sp_buf[0] = 0;
+    sp_cat(VIEW_NAME[ui.view]);
+    sp_cat(" page");                           /* "Play page": not the transport's "Play" */
+    if (ui.view == V_PADS) {
+        sp_cat(", button ");
+        itoa_u(ui.pad_sel + 1u, t);
+        sp_cat(t);
+    }
+    for (i = 0; i < 4; i++)
+        if (VIEW_KNOB[ui.view][i] != K_NONE) {
+            sp_cat(i ? ", " : ": ");
+            sp_knob(VIEW_KNOB[ui.view][i]);
+        }
+    if (!all)
+        return;
+    sp_cat(". Chord ");                        /* the big name in the middle, then the header */
+    sp_chord(ui.root, ui.type);
+    sp_cat(". Rhythm ");
+    sp_cat(om_rhythm(proj.par[P_RHYTHM])->name);
+    sp_cat(", tempo ");
+    if (om_ext) {
+        sp_cat("EXT");
+    } else {
+        itoa_u((uint32_t)proj.par[P_TEMPO], t);
+        sp_cat(t);
+    }
+    sp_cat(om_playing ? ", playing" : ui.armed ? ", waiting for a chord" : ", stopped");
+    if (proj.hold)
+        sp_cat(". Chord hold on");
+    if (proj.sync)
+        sp_cat(". Sync start on");
+}
+
+static uint32_t sp_ctx_sig(void) { return hash(hash(2166136261u, ui.view), ui.view == V_PADS ? ui.pad_sel : 0u); }
+static int32_t sp_chord_now(void) { return ui.pad == -1 ? -1 : (int32_t)((uint8_t)ui.pad | ui.root << 8 | ui.type << 16); }
+static void sp_snap(void)
+{
+    int i;
+    for (i = 0; i < SP_NV; i++)
+        sp.val[i] = (int16_t)knob_get(sp_knob_of(i));
+    sp.chord = sp_chord_now();
+    sp.playing = (int8_t)om_playing;
+    sp.armed = (int8_t)ui.armed;
+}
+
+static void speak(void)
+{
+    uint32_t now = plat_ms(), c;
+    int where = ann_where(), i, changed = -1;
+    int32_t ch;
+    if (!ann_on()) {
+        sp.started = 0;
+        sp_said = 0;
+        return;
+    }
+    if (!sp.started || where) {                       /* everything on the screen */
+        sp.started = 1;
+        sp.ctx = sp_ctx_sig();
+        sp_snap();
+        sp_screen(1);
+        ann_say(sp_buf, 0, ANN_NOW);
+        sp_said = 0;
+        return;
+    }
+    if (sp_said) {                                    /* a button said what it did (and what it changed) */
+        sp_said = 0;
+        sp_snap();
+        return;
+    }
+    if (om_playing != sp.playing) {
+        sp.playing = (int8_t)om_playing;
+        ann_say(om_playing ? "Play" : "Stop", 0, ANN_NOW);
+    }
+    c = sp_ctx_sig();
+    if (c != sp.ctx) {                                /* a new page: said when it settles */
+        sp.ctx = c;
+        sp_snap();
+        sp_screen(0);
+        ann_later(sp_buf, ANN_NOW, 200u, now);
+        return;
+    }
+    for (i = 0; i < SP_NV; i++) {                     /* a knob turning (or an encoder) */
+        int v = knob_get(sp_knob_of(i));
+        if (v != sp.val[i]) {
+            sp.val[i] = (int16_t)v;
+            if (changed < 0)
+                changed = i;
+        }
+    }
+    ch = sp_chord_now();
+    if (changed >= 0) {
+        sp.chord = ch;                                /* (a root or a type turned: the readout says it) */
+        sp_n = 0;
+        sp_knob(sp_knob_of(changed));
+        ann_later(sp_buf, ANN_NOW, 120u, now);
+        return;
+    }
+    if (ch != sp.chord) {                             /* a chord played: its name */
+        sp.chord = ch;
+        if (ch >= 0) {
+            sp_n = 0;
+            sp_chord(ui.root, ui.type);
+            ann_say(sp_buf, 0, ANN_NOW);
+        }
+    }
+}
+
+#ifdef OM_HOST
+/* every page, knob value, chord and message as a screen reader gets them (the "speakdump" command):
+ * KIND <tab> the text sent (fm1-reader/tools/audit.mjs puts it in words with web/words/ and checks it) */
+static void sp_print(const char *kind, const char *t) { printf("%s\t%s\n", kind, t); }
+static void speak_dump(void)
+{
+    static const char *const MSG[][2] = {{"UPDATE MODE IN", "3.."}, {"UPDATE MODE", "CANCELLED"}};
+    uint8_t keep_view = ui.view, keep_sel = ui.pad_sel, keep_ext = om_ext;
+    project_t keep = proj;
+    int v, q, i, x, lo, hi;
+    for (v = 0; v < NVIEWS; v++)
+        for (q = 0; q < (v == V_PADS ? NPADS : 1); q++) {
+            ui.view = (uint8_t)v;
+            ui.pad_sel = (uint8_t)q;
+            sp_screen(0);
+            sp_print("SCREEN", sp_buf);
+            for (i = 0; i < 4; i++) {
+                int k = VIEW_KNOB[v][i];
+                if (k == K_NONE || (v == V_PADS && q))
+                    continue;
+                knob_range(k, &lo, &hi);
+                for (x = lo; x <= hi; x++) {
+                    if (k < P_NPARAMS)
+                        proj.par[k] = (int16_t)x;
+                    else if (k == K_PADROOT)
+                        proj.pad_root[0] = (uint8_t)x;
+                    else if (k == K_PADTYPE)
+                        proj.pad_type[0] = (uint8_t)x;
+                    else
+                        proj.leds = (uint8_t)x;
+                    sp_n = 0;
+                    sp_knob(k);
+                    sp_print("KNOB", sp_buf);
+                }
+                proj = keep;
+            }
+        }
+    ui.view = V_PLAY;
+    for (x = 0; x < 4; x++) {                         /* WHERE: stopped, playing, waiting, the clock from MIDI */
+        proj.hold = proj.sync = (uint8_t)(x & 1);
+        om_ext = (uint8_t)(x == 3);
+        om_playing = (uint8_t)(x == 1 || x == 3);
+        ui.armed = (uint8_t)(x == 2);
+        sp_screen(1);
+        sp_print("WHERE", sp_buf);
+    }
+    proj = keep;
+    om_ext = keep_ext;
+    om_playing = 0;
+    ui.armed = 0;
+    for (x = 0; x < 12; x++)
+        for (i = 0; i < CH_NTYPES; i++) {
+            sp_n = 0;
+            sp_chord(x, i);
+            sp_print("CHORD", sp_buf);
+        }
+    for (i = 0; i < (int)(sizeof MSG / sizeof MSG[0]); i++) {   /* main_fm1.c's (not in the simulator) */
+        msg_text(MSG[i][0], MSG[i][1], sp_buf);
+        sp_print("MSG", sp_buf);
+    }
+    ui.view = keep_view;
+    ui.pad_sel = keep_sel;
+}
+#endif
+
 void ui_init(void)
 {
     memset(&ui, 0, sizeof ui);
@@ -780,6 +1026,8 @@ void ui_frame(void)
     draw_main();
     draw_knobs();
     leds();
+    speak();
+    ann_tick(plat_ms());
     ui.frame++;
 }
 

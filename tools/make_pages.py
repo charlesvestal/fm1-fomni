@@ -5,6 +5,7 @@
   index.html                    what FoMni-1 is, how it plays, and the ways in: try, install, download, source
   img/                          screenshots (docs/img)
   emu/                          FoMni-1 in the browser (build/emu, from web/emu/build.sh)
+  words/                        the screen reader's words files (web/words, from firmware/words.tsv)
   install/index.html            the web installer (web/omni_installer.html, with fm1pkg.js, fm1ota.js and
                                 the package's metadata inlined; Chrome or Edge, Web MIDI)
   firmware/omni-VERSION.fwsc    the package the installer writes; also the download
@@ -162,8 +163,10 @@ def main(pkg, version, out):
     if not (emu / "omni.wasm").exists():
         raise SystemExit("no build/emu/omni.wasm: run web/emu/build.sh (needs Emscripten)")
     shutil.copytree(emu, out / "emu")
+    # the screen reader's words files (fm1-reader): every one ever made, for the devices that point at them
+    shutil.copytree(SRC / "web" / "words", out / "words")
     (out / ".nojekyll").write_text("")
-    print(f"site: {out}: index.html, install/ ({product}), emu/, firmware/{name} ({len(raw)} B)")
+    print(f"site: {out}: index.html, install/ ({product}), emu/, words/, firmware/{name} ({len(raw)} B)")
 
 
 if __name__ == "__main__":

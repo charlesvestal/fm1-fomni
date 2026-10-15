@@ -20,6 +20,12 @@
  *   leds                         print the lit buttons and keys
  *   expect WHAT VALUE            check state: exit 1 on mismatch; VALUE "<N" / ">N" is a bound
  *   reboot                       re-run boot from the simulated flash (persistence test)
+ *   listen                       a screen reader starts listening (HELLO, again every 2 s): each SAY is printed
+ *                                ("said: ..."; "said!:" cuts off what was being said)
+ *   where                        the reader asks for everything on the screen
+ *   said TEXT                    some SAY since the last "said" (or "listen") has TEXT in it: else a failure
+ *   speakdump                    every page, knob value, chord and message as the reader gets them (the audit)
+ * OMNI_SAID_LOG=FILE: a reader listens from boot, quietly, and every SAY is appended to FILE (the audit).
  */
 #define OM_HOST 1
 #include <stdio.h>
@@ -134,6 +140,42 @@ uint32_t plat_xruns(void) { return 0; }
 
 /* -------------------------------------------------------------- app --- */
 #include "../firmware/src/app/app.h"
+#define ANN_NAME "FoMni-1 " OM_VERSION
+#include "ann_words.h"                                  /* the words file's link (tools/gen_words.py) */
+#include "../firmware/src/announce.c"
+/* what the reader is told: every SAY to stdout with "said:" (listen), and kept for the "said" check */
+static char said_last[ANN_MAX + 1], said_log[16384];   /* said_log: every SAY since the last "said" check */
+static uint32_t said_len;
+static int said_print = 1, sim_listen;
+static FILE *said_log_f;                                /* OMNI_SAID_LOG=FILE: every SAY, for fm1-reader's audit */
+#ifdef OM_WEB
+static void web_said(const uint8_t *p, uint32_t n);
+#endif
+static int ann_wire_send(const uint8_t *p, uint32_t n)
+{
+#ifdef OM_WEB
+    web_said(p, n);
+#endif
+    if (n >= 7u && p[4] == ANN_SAY) {
+        uint32_t i, k = 0;
+        for (i = 6; i + 1u < n && k < ANN_MAX; i++)
+            said_last[k++] = (char)p[i];
+        said_last[k] = 0;
+        if (said_len + k + 2u < sizeof said_log) {
+            memcpy(said_log + said_len, said_last, k);
+            said_len += k;
+            said_log[said_len++] = '\n';
+            said_log[said_len] = 0;
+        }
+#ifndef OM_WEB
+        if (said_print)
+            printf("said%s: %s\n", (p[5] & ANN_NOW) ? "!" : "", said_last);
+        if (said_log_f)
+            fprintf(said_log_f, "%s\t%s\n", (p[5] & ANN_KEEP) ? "WARN" : "MSG", said_last);
+#endif
+    }
+    return 0;
+}
 #include "../firmware/src/app/project.c"
 #include "../firmware/src/app/ui.c"
 
@@ -309,6 +351,10 @@ static void run_ms(uint32_t ms)
             }
             audio_due_ms += 256.0 * 1000.0 / 44100.0;
         }
+        if (sim_listen && now_ms % 2000u == 0) {        /* the reader's HELLO, as it sends it */
+            static const uint8_t HELLO[] = {ANN_H0, ANN_H1, ANN_H2, ANN_HELLO, ANN_VER};
+            ann_frame(HELLO, sizeof HELLO, now_ms);
+        }
         if (now_ms >= ui_due) {
             ui_due = now_ms + 16;
             ui_frame();
@@ -430,7 +476,16 @@ int main(int argc, char **argv)
     }
     snprintf(out, sizeof out, "%s/midi_out.txt", dir);
     midi_log = fopen(out, "w");
+    if (getenv("OMNI_SAID_LOG")) {                       /* a reader listens from the start, quietly: the log only */
+        said_log_f = fopen(getenv("OMNI_SAID_LOG"), "a");
+        sim_listen = 1;
+        said_print = 0;
+    }
     boot();
+    if (sim_listen) {
+        static const uint8_t HELLO[] = {ANN_H0, ANN_H1, ANN_H2, ANN_HELLO, ANN_VER};
+        ann_frame(HELLO, sizeof HELLO, now_ms);
+    }
     while (fgets(line, sizeof line, sc)) {
         char cmd[32] = {0}, a[256] = {0}, b[64] = {0}, c[64] = {0};
         lineno++;
@@ -530,6 +585,35 @@ int main(int argc, char **argv)
         else if (!strcmp(cmd, "reboot")) {
             memset(&proj, 0, sizeof proj);
             boot();
+        } else if (!strcmp(cmd, "listen")) {
+            static const uint8_t HELLO[] = {ANN_H0, ANN_H1, ANN_H2, ANN_HELLO, ANN_VER};
+            sim_listen = 1;
+            said_len = 0;
+            said_log[0] = 0;
+            ann_frame(HELLO, sizeof HELLO, now_ms);
+            run_ms(40);
+        } else if (!strcmp(cmd, "speakdump")) {        /* every screen's text for a screen reader, to stdout */
+            speak_dump();
+        } else if (!strcmp(cmd, "where")) {
+            static const uint8_t WHERE[] = {ANN_H0, ANN_H1, ANN_H2, ANN_WHERE};
+            ann_frame(WHERE, sizeof WHERE, now_ms);
+            run_ms(40);
+        } else if (!strcmp(cmd, "said")) {
+            char *t = line + 4, *e;
+            while (*t == ' ')
+                t++;
+            e = t + strlen(t);
+            while (e > t && (e[-1] == '\n' || e[-1] == '\r' || e[-1] == ' '))
+                *--e = 0;
+            if (!strstr(said_log, t)) {
+                printf("FAIL line %d: said \"%s\": not said (since the last check: %s)\n", lineno, t,
+                       said_len ? said_log : "nothing\n");
+                fails++;
+            } else {
+                printf("  ok said \"%s\"\n", t);
+            }
+            said_len = 0;
+            said_log[0] = 0;
         } else if (!strcmp(cmd, "echo"))
             printf("%s", line + 5);
         else {

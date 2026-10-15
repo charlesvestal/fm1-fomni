@@ -123,6 +123,16 @@ static void ota_commit(const uint8_t *parm)
 }
 
 #include "app/app.h"
+#define ANN_NAME "FoMni-1 " OM_VERSION
+#define ANN_DATA OM_POOL
+#include "ann_words.h"            /* the link to FoMni's words file (tools/gen_words.py, from firmware/words.tsv) */
+#include "announce.c"             /* the screen as text for a screen reader (fm1-reader) */
+static int ann_wire_send(const uint8_t *p, uint32_t n)   /* never waits: no room (nobody reading), not sent */
+{
+    if (!usb.config || usb.suspended || SXQ - (so_w - so_r) < (n + 2u) / 3u)
+        return -1;
+    return ota_wire_send(p, n);
+}
 #include "app/panel.c"
 #include "app/plat_fm1.c"
 #include "app/project.c"

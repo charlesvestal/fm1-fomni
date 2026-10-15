@@ -1,0 +1,8 @@
+# FoMni-1's words for the screen reader (fm1-reader): the screen's text <TAB> what to say. "#" a number, "*" a
+# word left out. tools/gen_words.py makes web/words/<id>.json (published with the site) and the link the
+# FM-1 sends. Change a line and a new file is made: keep the old ones (devices in the wild point at them).
+# url: https://charlesvestal.github.io/fm1-fomni/words/
+Eb	E flat
+Ab	A flat
+Bb	B flat
+EXT	external clock

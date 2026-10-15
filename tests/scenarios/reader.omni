@@ -1,0 +1,91 @@
+# the screen reader (fm1-reader, announce.c): a reader listens, and each page, knob, chord, button and
+# transport change is said once, in the screen's own text (the words file says it in full)
+wait 200
+listen
+wait 100
+said Play page: Voice 1 80, Voice 2 45, Sustain 50, Chord 60. Chord C major. Rhythm Rock 1, tempo 116, stopped
+# a page settles before it is said
+tap SEQ
+wait 300
+said Rhythm page: Rhythm Rock 1, Tempo 116, Drums 70, Auto bass On
+tap FX
+tap GLO
+wait 300
+said Setup page: Tune 0
+# a knob: its name and value, once it settles
+spin K1 3
+wait 300
+said Tune +3
+# the encoders
+turn SELECT 2 200
+wait 300
+said Tempo 118
+turn ALGO 1
+wait 300
+said Rhythm Rock 2
+turn PRESET 1
+wait 300
+said Transpose +1
+turn PRESET -1
+wait 300
+said Transpose 0
+# a chord button: its chord, at once (ENV held: the minor)
+key b1 down
+wait 50
+said C major
+key b1 up
+press ENV
+key b2 down
+wait 50
+said G minor
+key b2 up
+release ENV
+wait 100
+# the transport
+tap PLAY
+wait 50
+said Play
+tap PLAY
+wait 50
+said Stop
+# the buttons' messages, said once (OCT+ says its own: not again as a readout)
+tap ARP
+said CHORD HOLD ON
+tap ARP
+said CHORD HOLD OFF
+tap REC
+said SYNC START ON
+tap PLAY
+said WAITING FOR A CHORD
+tap PLAY
+said SYNC START CANCELLED
+tap REC
+said SYNC START OFF
+tap OCT+
+wait 300
+said OCTAVE +1
+tap OCT-
+wait 300
+tap SAVE
+said SAVED
+# the CHORDS page: the button pressed, then a knob on it
+tap SEL
+key b6 down
+key b6 up
+wait 300
+said Chords page, button 7: Root G, Type 7
+spin K2 1
+wait 300
+said Type major 7
+# a chord from MIDI, channel 2
+midi 91 3C 64
+midi 91 40 64
+midi 91 43 64
+wait 50
+said C major
+midi 81 3C 00
+midi 81 40 00
+midi 81 43 00
+# WHERE: everything again
+where
+said Chords page, button 7

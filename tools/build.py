@@ -125,14 +125,16 @@ def tc_all(*cmds):
 
 
 def generate():
-    """generated headers: the font (Felucca's)"""
+    """generated headers: the font (Felucca's), the screen reader's words link (fm1-reader)"""
     GEN.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run([sys.executable, str(SRC / "tools" / "gen_font.py"), str(GEN / "felucca_font.h")],
-                       capture_output=True, text=True)
-    sys.stdout.write(r.stdout)
-    if r.returncode:
-        sys.stderr.write(r.stderr)
-        raise SystemExit("build: gen_font.py failed")
+    tools = SRC / "tools"
+    for c in [[tools / "gen_font.py", GEN / "felucca_font.h"],
+              [tools / "gen_words.py", SRC / "firmware" / "words.tsv", SRC / "web" / "words", GEN / "ann_words.h"]]:
+        r = subprocess.run([sys.executable, *map(str, c)], capture_output=True, text=True)
+        sys.stdout.write(r.stdout)
+        if r.returncode:
+            sys.stderr.write(r.stderr)
+            raise SystemExit(f"build: {c[0].name} failed")
 
 
 # ---- update loader

@@ -67,6 +67,13 @@ The drums on channel 10:
 | Ride | 51 |
 | Claves | 75 |
 
+### Screen reader
+
+FoMni-1 tells the [FM-1 Screen Reader](https://charlesvestal.github.io/fm1-reader/) what its screen shows,
+over USB: the page and its knobs, a knob's value as it turns, the chord you play, play and stop, and what
+each button did. Open the page in Chrome with the FM-1 plugged in; it speaks with its own voice, or hands
+the text to your computer's screen reader.
+
 ## Building and testing
 
 The toolchain is the same as X0X's (see [BUILDING.md](BUILDING.md)):

@@ -138,7 +138,8 @@ knobs as you turn them, and the chords. <a href="emu/">FoMni-1 in the browser</a
 <footer>
 <p class="small">To go back to the official
 firmware, use the installer's "Back to the stock firmware", or M-VAVE's updater, M-UPGRADE, from
-<a href="https://www.m-vave.com/download">m-vave.com/download</a>. Omnichord is a trademark of Suzuki; M-VAVE and FM-1 are
+<a href="https://www.m-vave.com/download">m-vave.com/download</a> (M-UPGRADE 3.11 finds the current version, not
+older ones). Omnichord is a trademark of Suzuki; M-VAVE and FM-1 are
 trademarks of their owners. FoMni-1 is not affiliated with any of them.</p>
 </footer>
 </body>

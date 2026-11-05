@@ -28,6 +28,17 @@ run omni sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wdouble-promot
     -o $OUT/omni_test tests/host/omni_test.c firmware/src/dsp/omni.c && $OUT/omni_test"
 run storage sh -c "$CC -O2 -o $OUT/storage_test tests/storage_test.c && $OUT/storage_test"
 run flash-ok sh -c "$CC -std=c99 -Wall -Wextra -Werror -o $OUT/flash_ok_test tests/host/flash_ok_test.c && $OUT/flash_ok_test"   # firmware/hal/fm1_flash_ok.h: the flash parts the storage may use
+# the M-UPGRADE handshake (firmware/src/ota.c): a release's identity cut to NAME_ and three digits for the plain
+# query (M-UPGRADE 3.11), the whole one for the query with body 01; a dev build's; the update loader's, whole
+for m in long short loader; do
+    case $m in long) f="" ;; short) f="-DTEST_ID='\"FM-1_800\"'" ;; loader) f="-DFELUCCA_LOADER=1" ;; esac
+    run "ota-hs-$m" sh -c "$CC -std=c11 -O1 -Wall -Wextra -Werror -Wno-unused-function $f -o $OUT/ota_hs_$m tests/ota_hs_test.c && $OUT/ota_hs_$m"
+done
+# the web installer's handshake (web/fm1ota.js): a firmware that answers M-UPGRADE 3.11's query short and its whole
+# identity to the one with 01, older builds, M-VAVE's firmware, the loader
+if command -v node >/dev/null 2>&1; then
+    run installer-hs node tests/host/installer_hs_test.mjs
+fi
 # the update path, against the firmware package (Felucca's tests; needs ./build.sh)
 if [ -f build/omni.fwsc ]; then
     run ota-entry sh -c "$CC -o $OUT/ota_test tests/ota_test.c && $OUT/ota_test build/omni.fwsc"

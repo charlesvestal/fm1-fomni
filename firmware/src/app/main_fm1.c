@@ -248,7 +248,7 @@ static void fm1_main(void)
     uint32_t last_frame = 0;
     {
         uint32_t f = irq_save();
-        flash_ok = FL_FAR(fl_jedec_ram)() == 0x856014u;   /* the expected 1 MiB part, else RAM only */
+        flash_ok = FM1B_FLASH_JEDEC_OK(FL_FAR(fl_jedec_ram)());   /* a known 1 MiB part, else RAM only */
         irq_restore(f);
         if (flash_ok)
             ota_boot_cleanup();

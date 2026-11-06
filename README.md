@@ -1,11 +1,11 @@
 # FoMni for the M-VAVE FM-1
 
-FoMni turns the M-VAVE FM-1 into a chord harp inspired by the Suzuki Omnichord. The 16 white
+FoMni turns your M-VAVE FM-1 into a chord harp, inspired by the Suzuki Omnichord. The 16 white
 keys are the strum plate: run a finger across them and they ring out the chord. The 11 black keys
-are the chord buttons. Behind them sit an organ-like chord with its bass, and the OM-84's ten
-rhythms, which can play the bass and chord in time (auto bass sync).
+are the chord buttons. Under the strings, an organ-like chord and a bass hold the harmony, and the
+OM-84's ten rhythms can play them in time (auto bass sync).
 
-It is meant to be simple: one screen, four knobs a page, no patterns to program.
+It's meant to be simple. There's one screen with four knobs a page, and no patterns to program.
 
 [![FoMni running on the FM-1 (watch on YouTube)](https://img.youtube.com/vi/pahaM6nzucE/maxresdefault.jpg)](https://www.youtube.com/watch?v=pahaM6nzucE)
 
@@ -15,47 +15,52 @@ It is meant to be simple: one screen, four knobs a page, no patterns to program.
 - **Install it** (Chrome or Edge, with the FM-1 plugged in): <https://charlesvestal.github.io/fm1-fomni/install/>
 - **Download the firmware file**: [releases](https://github.com/charlesvestal/fm1-fomni/releases)
 
-Installing is at your own risk, though it's hard to get stuck: the web installer can put M-VAVE's
+Install at your own risk, though it's hard to get stuck. The web installer can always put M-VAVE's
 firmware back, and an FM-1 that keeps crashing starts in a safe mode.
 
 ## Playing
 
 | | |
 |---|---|
-| White keys | The strum plate. Each key plucks one string of the chord. As on the Omnichord, each group of three keys is root, third and fifth, folded into an F#–F window, five groups up, with a root on top. |
-| Black keys | Chord buttons (F C G, Dm Am, Em G7 E7, D7 Bb, A7 by default). Hold **ENV** for the minor, **LFO** for the 7th, both for the m7, the Omnichord's three rows. |
-| PLAY | The rhythm, on and off. |
-| REC | SYNC START: the rhythm waits for your first chord. |
-| ARP | CHORD HOLD: the chord keeps playing after you let go (press the same button again to stop it). |
-| OCT− / OCT+ | Move the strum plate an octave. |
-| SELECT | Tempo. |
-| ALGORITHM | Rhythm. |
-| PRESETS | Transpose (−6 to +6). |
-| KNOB 1–4 | The four values on the screen (see the pages below). |
+| White keys | The strum plate. Each key plucks one string of the chord. As on the Omnichord, each group of three keys is root, third and fifth, five groups up, folded into an F#–F window, with one more root on top. |
+| Black keys | The chord buttons, F C G, Dm Am, Em G7 E7, D7 Bb and A7 at first. Hold **ENV** for the minor, **LFO** for the 7th, or both for the m7, like the Omnichord's three rows. |
+| PLAY | Starts and stops the rhythm. |
+| REC | Turns on SYNC START, so the rhythm waits for your first chord. |
+| ARP | Turns on CHORD HOLD, so the chord keeps playing after you let go. Press the same chord button again to stop it. |
+| OCT− / OCT+ | Move the strum plate down or up an octave. |
+| SELECT | Sets the tempo. |
+| ALGORITHM | Picks the rhythm. |
+| PRESETS | Transposes, from −6 to +6. |
+| KNOB 1–4 | Set the four values on the screen. The pages below list them. |
 | SAVE | Saves. FoMni also saves by itself a few seconds after a change, once it's quiet. |
 
 ### The pages
 
-Each page puts four values on KNOB 1–4. EDIT steps through the pages.
+Each page puts four values on KNOB 1–4. Press EDIT to step through the pages.
 
-- **HOME: Play.** Voice 1, Voice 2, Sustain, Chord level.
-- **SEQ: Rhythm.** Rhythm, Tempo, Drums level, Auto bass (on: the bass and chord play in time with the rhythm).
-- **FX: Sound.** Reverb (the strings' send), Space (the plate's size), Width, Chord rev (the chord and bass's send). The drums stay dry.
-- **SEL: Chords.** Change the chord on any black key: press the key, then turn Root (KNOB 1) and Type (KNOB 2). KNOB 3 and 4 are Transpose and Octave.
-- **GLO: Setup.** Tune, MIDI out, Lights (On: the key lights, and the unlit buttons glow dimly so they can be read; Keys: the key lights only; Off).
+- The Play page (**HOME**) has Voice 1, Voice 2, Sustain and Chord level.
+- The Rhythm page (**SEQ**) has Rhythm, Tempo, Drums level and Auto bass. With Auto bass on, the bass and chord
+  play in time with the rhythm.
+- The Sound page (**FX**) has Reverb, how much of the strings go to the reverb; Space, the plate's size; Width; and
+  Chord rev, how much of the chord and bass go to the reverb. The drums stay dry.
+- On the Chords page (**SEL**), you can change the chord on any black key. Press the key, then turn Root (KNOB 1)
+  and Type (KNOB 2). KNOB 3 and 4 set Transpose and Octave.
+- The Setup page (**GLO**) has Tune, MIDI out and Lights. With Lights on, the keys light up and the unlit buttons
+  glow dimly so you can find them. With Keys, only the keys light. Off turns the lights off.
 
 **Voice 1** is the Omnichord's shimmering harp, and **Voice 2** is its plain one. Mix them, and
 set how long the strings ring with **Sustain**.
 
 ### MIDI
 
-MIDI comes in over USB and the TRS jack (the FM-1's jack is an input), and goes out over USB.
+MIDI comes in over USB and the TRS jack, and goes out over USB. The FM-1's jack is input only.
 
-- **In, channel 1:** notes pluck the nearest string.
-- **In, channel 2:** play a chord on a keyboard and it becomes the chord, as if you'd pressed a black key.
-- **In, clock:** the rhythm follows MIDI clock and start / stop; the screen shows EXT for the tempo.
-- **Out** (on by default, Setup page): the strings on channel 1, the chord on 2, the bass on 3, the drums
-  on 10, and clock with start / stop when the rhythm runs on its own tempo.
+- Notes coming in on channel 1 pluck the nearest string.
+- Play a chord on a keyboard on channel 2, and it becomes the chord, as if you'd pressed a black key.
+- When MIDI clock comes in, the rhythm follows it, along with start and stop. The screen shows EXT for the tempo.
+- MIDI out is on by default, and you can turn it off on the Setup page. The strings go out on channel 1, the
+  chord on 2, the bass on 3 and the drums on 10. When the rhythm runs on its own tempo, FoMni also sends clock,
+  start and stop.
 
 The drums on channel 10:
 
@@ -69,9 +74,9 @@ The drums on channel 10:
 
 ### Screen reader
 
-FoMni-1 tells the [FM-1 Screen Reader](https://charlesvestal.github.io/fm1-reader/) what its screen shows,
-over USB: the page and its knobs, a knob's value as it turns, the chord you play, play and stop, and what
-each button did. Open the page in Chrome with the FM-1 plugged in; it speaks with its own voice, or hands
+FoMni-1 tells [FM-1 Screen Reader](https://charlesvestal.github.io/fm1-reader/) what its screen shows, over
+USB. You'll hear the page and its knobs, a knob's value as you turn it, the chord you play, play and stop, and
+what each button did. Open the page in Chrome with the FM-1 plugged in. It speaks with its own voice, or hands
 the text to your computer's screen reader.
 
 ## Building and testing

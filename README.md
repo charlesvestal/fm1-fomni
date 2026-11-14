@@ -103,3 +103,5 @@ The rhythms, waves, drum sounds and envelope shapes come from
 
 Omnichord is a trademark of Suzuki. FoMni isn't affiliated with or endorsed by Suzuki, M-VAVE or
 Hügelton Instruments.
+
+You can also try FoMni in the browser, no flashing needed, in the free community [FM-1 Emulator](https://fm1-emulator.atst.tools/).

@@ -8,12 +8,13 @@
 #include "omni.h"
 
 static int bad, midi_n, str_on = -1, str_off = -1;   /* the strings' (channel 1) last note on and off */
+static uint8_t str_offs[128];                           /* the strings' notes turned off */
 void om_midi_out(uint32_t st, uint32_t d1, uint32_t d2)
 {
     if (st == 0x90 && d2)
         str_on = (int)d1;
     else if (st == 0x80)
-        str_off = (int)d1;
+        str_offs[str_off = (int)d1 & 127] = 1;
     midi_n++;
 }
 
@@ -153,7 +154,8 @@ int main(void)
         }
         check("plate at Space 100: the tail is 60 dB down within 20 s", e < e0 * 1e-6);
     }
-    {   /* a chord change while a string rings: it goes on at the new chord's note (the OM-84's legato) */
+    {   /* a chord change while a string rings, Strings at Ring (the default): it keeps its note; the next
+         * pluck plays the new chord's */
         float e;
         om_init();
         om_set(P_SUSTAIN, 100);
@@ -161,20 +163,44 @@ int main(void)
         om_voicing(0, CH_MAJ, 0, 0, h, c, &bass);
         om_strum(3);
         run(20);
-        check("C: string 3 rings at C4", om_str_level[3] > 0.3f && str_on == h[3]);
+        check("Ring, C: string 3 rings at C4", om_str_level[3] > 0.3f && str_on == h[3]);
+        e = om_str_level[3];
+        str_on = str_off = -1;
+        om_chord(5, CH_MAJ);
+        om_voicing(5, CH_MAJ, 0, 0, h, c, &bass);
+        run(1);
+        check("Ring, to F: string 3 keeps C4 (no note off, no note on)", str_off == -1 && str_on == -1);
+        check("Ring, to F: the string goes on ringing", om_str_level[3] > 0.0f && om_str_level[3] <= e);
+        check("Ring, to F: om_str_note is F's note, for the next pluck", om_str_note[3] == h[3] && h[3] != 60);
+        memset(str_offs, 0, sizeof str_offs);
+        om_strum(3);
+        run(1);
+        check("Ring, F: plucked again, it plays F's note (off C4)", str_offs[60] && str_on == h[3]);
+    }
+    {   /* a chord change while a string rings, Strings at Follow: it goes on at the new chord's note (the
+         * OM-84's legato) */
+        float e;
+        om_init();
+        om_strings(1);
+        om_set(P_SUSTAIN, 100);
+        om_chord(0, CH_MAJ);
+        om_voicing(0, CH_MAJ, 0, 0, h, c, &bass);
+        om_strum(3);
+        run(20);
+        check("Follow, C: string 3 rings at C4", om_str_level[3] > 0.3f && str_on == h[3]);
         e = om_str_level[3];
         om_chord(5, CH_MAJ);
         om_voicing(5, CH_MAJ, 0, 0, h, c, &bass);
         run(1);
-        check("to F: string 3 now plays F's note (off C4, on F4)", str_off == 60 && str_on == h[3] && h[3] != 60);
-        check("to F: the string goes on ringing, not plucked again", om_str_level[3] > 0.0f && om_str_level[3] <= e);
-        check("to F: om_str_note follows", om_str_note[3] == h[3]);
+        check("Follow, to F: string 3 now plays F's note (off C4, on F4)", str_off == 60 && str_on == h[3] && h[3] != 60);
+        check("Follow, to F: the string goes on ringing, not plucked again", om_str_level[3] > 0.0f && om_str_level[3] <= e);
+        check("Follow, to F: om_str_note follows", om_str_note[3] == h[3]);
         om_set(P_SUSTAIN, 0);
         run(44100 / 256);
         str_on = -1;
         om_chord(7, CH_MAJ);
         run(1);
-        check("a string that has ended stays quiet on a chord change", str_on == -1 && om_str_level[3] == 0.0f);
+        check("Follow: a string that has ended stays quiet on a chord change", str_on == -1 && om_str_level[3] == 0.0f);
     }
     check("MIDI out sent notes", midi_n > 100);
     om_set(P_MIDI, 0);

@@ -22,7 +22,7 @@ firmware back, and an FM-1 that keeps crashing starts in a safe mode.
 
 | | |
 |---|---|
-| White keys | The strum plate. Each key plucks one string of the chord. As on the Omnichord, each group of three keys is root, third and fifth, five groups up, folded into an F#–F window, with one more root on top. When you change chords, strings that are still ringing move to the new chord's notes, as on the Omnichord. |
+| White keys | The strum plate. Each key plucks one string of the chord. As on the Omnichord, each group of three keys is root, third and fifth, five groups up, folded into an F#–F window, with one more root on top. Strings that are still ringing keep their notes when you change chords. To have them move to the new chord's notes, as on the Omnichord, set Strings to Follow on the Setup page. |
 | Black keys | The chord buttons, F C G, Dm Am, Em G7 E7, D7 Bb and A7 at first. Hold **ENV** for the minor, **LFO** for the 7th, or both for the m7, like the Omnichord's three rows. |
 | PLAY | Starts and stops the rhythm. |
 | REC | Turns on SYNC START, so the rhythm waits for your first chord. |
@@ -45,8 +45,10 @@ Each page puts four values on KNOB 1–4. Press EDIT to step through the pages.
   Chord rev, how much of the chord and bass go to the reverb. The drums stay dry.
 - On the Chords page (**SEL**), you can change the chord on any black key. Press the key, then turn Root (KNOB 1)
   and Type (KNOB 2). KNOB 3 and 4 set Transpose and Octave.
-- The Setup page (**GLO**) has Tune, MIDI out and Lights. With Lights on, the keys light up and the unlit buttons
-  glow dimly so you can find them. With Keys, only the keys light. Off turns the lights off.
+- The Setup page (**GLO**) has Tune, MIDI out, Lights and Strings. With Lights on, the keys light up and the unlit
+  buttons glow dimly so you can find them. With Keys, only the keys light. Off turns the lights off. Strings sets
+  what ringing strings do when you change chords. With Ring, they keep their notes. With Follow, they move to the
+  new chord's notes and keep ringing, as on the Omnichord.
 
 **Voice 1** is the Omnichord's shimmering harp, and **Voice 2** is its plain one. Mix them, and
 set how long the strings ring with **Sustain**.

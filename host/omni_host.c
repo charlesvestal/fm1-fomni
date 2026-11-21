@@ -404,6 +404,8 @@ static int expect(const char *what, const char *val)
         got = proj.hold;
     else if (!strcmp(what, "sync"))
         got = proj.sync;
+    else if (!strcmp(what, "strings"))
+        got = proj.strings;
     else if (!strcmp(what, "armed"))
         got = ui.armed;
     else if (!strcmp(what, "dirty"))

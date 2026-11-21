@@ -13,13 +13,13 @@
 enum { V_PLAY, V_RHYTHM, V_SOUND, V_PADS, V_SETUP, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Play", "Rhythm", "Sound", "Chords", "Setup"};
 /* the four knobs of each page: a parameter, or one of these */
-enum { K_PADROOT = 100, K_PADTYPE, K_LEDS, K_NONE };
+enum { K_PADROOT = 100, K_PADTYPE, K_LEDS, K_STRINGS, K_NONE };
 static const uint8_t VIEW_KNOB[NVIEWS][4] = {
     {P_VOICE1, P_VOICE2, P_SUSTAIN, P_CHORD},
     {P_RHYTHM, P_TEMPO, P_RHYVOL, P_ABC},
     {P_REVERB, P_SPACE, P_WIDTH, P_CREV},
     {K_PADROOT, K_PADTYPE, P_TRANSPOSE, P_OCTAVE},
-    {P_TUNE, P_MIDI, K_LEDS, K_NONE},
+    {P_TUNE, P_MIDI, K_LEDS, K_STRINGS},
 };
 
 static const uint8_t WHITE_K[OM_NSTR] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
@@ -142,6 +142,8 @@ static int knob_get(int k)
         return proj.pad_type[ui.pad_sel];
     if (k == K_LEDS)
         return proj.leds;
+    if (k == K_STRINGS)
+        return proj.strings;
     return 0;
 }
 static void knob_range(int k, int *lo, int *hi)
@@ -151,14 +153,14 @@ static void knob_range(int k, int *lo, int *hi)
         *hi = om_param_info(k)->hi;
     } else {
         *lo = 0;
-        *hi = k == K_PADROOT ? 11 : k == K_PADTYPE ? CH_NTYPES - 1 : k == K_LEDS ? 2 : 0;
+        *hi = k == K_PADROOT ? 11 : k == K_PADTYPE ? CH_NTYPES - 1 : k == K_LEDS ? 2 : k == K_STRINGS ? 1 : 0;
     }
 }
 static const char *knob_name(int k)
 {
     if (k < P_NPARAMS)
         return om_param_info(k)->name;
-    return k == K_PADROOT ? "Root" : k == K_PADTYPE ? "Type" : k == K_LEDS ? "Lights" : "";
+    return k == K_PADROOT ? "Root" : k == K_PADTYPE ? "Type" : k == K_LEDS ? "Lights" : k == K_STRINGS ? "Strings" : "";
 }
 static void knob_text(int k, char *b)
 {
@@ -175,6 +177,10 @@ static void knob_text(int k, char *b)
             ;
     } else if (k == K_LEDS) {                    /* On: the keys, and the unlit buttons glow; Keys: no glow */
         const char *n = v == 2 ? "Keys" : v ? "On" : "Off";
+        while ((*b++ = *n++))
+            ;
+    } else if (k == K_STRINGS) {                 /* on a chord change, ringing strings keep their notes or follow */
+        const char *n = v ? "Follow" : "Ring";
         while ((*b++ = *n++))
             ;
     } else {
@@ -205,6 +211,9 @@ static void knob_set(int k, int v)
         }
     } else if (k == K_LEDS) {
         proj.leds = (uint8_t)v;
+    } else if (k == K_STRINGS) {
+        proj.strings = (uint8_t)v;
+        om_strings(v);
     }
     mark_dirty();
 }
@@ -797,7 +806,8 @@ static void leds(void)
  * with its knobs; a knob's value as it turns; the chord a button (or MIDI) plays; play and stop; what a
  * button did (say). WHERE (the reader asks, or it has just started listening) is everything on the screen.
  * Nothing is built while no reader listens. */
-#define SP_NV (P_NPARAMS + 3)                  /* the values watched: the parameters, the button's root and type, lights */
+#define SP_NV (P_NPARAMS + 4)                  /* the values watched: the parameters, the button's root and type, lights,
+                                                * strings */
 static struct {
     uint32_t ctx;                              /* the page, hashed: a change is said */
     int32_t chord;                             /* the chord said last: button | root | type, -1 none */
@@ -978,8 +988,10 @@ static void speak_dump(void)
                         proj.pad_root[0] = (uint8_t)x;
                     else if (k == K_PADTYPE)
                         proj.pad_type[0] = (uint8_t)x;
-                    else
+                    else if (k == K_LEDS)
                         proj.leds = (uint8_t)x;
+                    else
+                        proj.strings = (uint8_t)x;
                     sp_n = 0;
                     sp_knob(k);
                     sp_print("KNOB", sp_buf);

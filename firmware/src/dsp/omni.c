@@ -89,7 +89,7 @@ void om_voicing(int root, int type, int transpose, int octave, uint8_t harp[OM_N
 }
 
 /* ------------------------------------------------------------ commands --- */
-enum { C_SET, C_CHORD, C_GATE, C_STRUM, C_PLAY, C_PANIC, C_CLOCK };
+enum { C_SET, C_CHORD, C_GATE, C_STRUM, C_PLAY, C_PANIC, C_CLOCK, C_STRINGS };
 #define QN 64u
 static uint32_t q[QN];
 static volatile uint32_t q_w, q_r;
@@ -109,6 +109,7 @@ void om_strum(int s) { post(C_STRUM, s, 0); }
 void om_play(int on) { post(C_PLAY, on, 0); }
 void om_panic(void) { post(C_PANIC, 0, 0); }
 void om_clock(int msg) { post(C_CLOCK, msg, 0); }
+void om_strings(int on) { post(C_STRINGS, on, 0); }
 
 /* -------------------------------------------------------------- state --- */
 volatile float om_str_level[OM_NSTR];
@@ -123,6 +124,7 @@ static float tunefac = 1.0f, v1, v2, cvol, rvol, rsend, csend, sus_rate;
 static float pan_l[OM_NSTR], pan_r[OM_NSTR];
 static int root, type;
 static uint8_t harp_n[OM_NSTR], chord_n[OM_NCHORD], bass_n;
+static uint8_t follow;                            /* om_strings(): strings still ringing follow a chord change */
 static int gate;
 
 static float sin3[360];                       /* Chordian's shimmer shape: |sin|^0.6 */
@@ -248,8 +250,9 @@ static void bass_cmd(char c, char which)
     }
 }
 
-/* the chord changed: what sounds moves to it (the OM's chord and bass follow the buttons, and so do the
- * strings still ringing: each glides on, legato, at the new chord's note for its place on the plate) */
+/* the chord changed: what sounds moves to it (the OM's chord and bass follow the buttons). The strings still
+ * ringing keep their notes, or with Follow (om_strings) each goes on, legato, at the new chord's note for its
+ * place on the plate */
 static void retune(void)
 {
     int i;
@@ -257,7 +260,7 @@ static void retune(void)
     for (i = 0; i < OM_NSTR; i++) {
         str_t *v = &str[i];
         om_str_note[i] = harp_n[i];
-        if (v->on && v->v > 0.0f && v->note != harp_n[i]) {   /* (a string in its last fade just ends) */
+        if (follow && v->on && v->v > 0.0f && v->note != harp_n[i]) {   /* (a string in its last fade just ends) */
             int vel = (int)(v->v * 100.0f);
             midi(0x80, v->note, 0);
             str_note(v, harp_n[i]);
@@ -494,6 +497,7 @@ void om_init(void)
     q_r = q_w = 0;
     root = 0;
     type = CH_MAJ;
+    follow = 0;
     for (i = 0; i < P_NPARAMS; i++)
         apply(i, PARAMS[i].def);
     retune();
@@ -572,6 +576,9 @@ static void drain(void)
                 play_start(1);
             else if (!a && om_playing)
                 play_stop();
+            break;
+        case C_STRINGS:
+            follow = (uint8_t)(a != 0);
             break;
         case C_CLOCK:
             om_ext = 1;                             /* a clock message: someone else leads */

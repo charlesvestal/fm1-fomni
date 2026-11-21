@@ -101,7 +101,7 @@ X0X, and the installer can always put M-VAVE's own firmware back. Install at you
 
 <h2 id="playing">Playing</h2>
 <table aria-labelledby="playing">
-<tr><th scope="row">White keys</th><td>The strum plate. Each key plucks one string of the chord. As on the Omnichord, the keys go root, third and fifth, five times up, folded into an F#–F window, with one more root on top. When you change chords, strings that are still ringing move to the new chord's notes, as on the Omnichord.</td></tr>
+<tr><th scope="row">White keys</th><td>The strum plate. Each key plucks one string of the chord. As on the Omnichord, the keys go root, third and fifth, five times up, folded into an F#–F window, with one more root on top. Strings that are still ringing keep their notes when you change chords. To have them move to the new chord's notes, as on the Omnichord, set Strings to Follow on the Setup page.</td></tr>
 <tr><th scope="row">Black keys</th><td>The chord buttons: F C G, Dm Am, Em G7 E7, D7 Bb, A7. Hold ENV for the minor, LFO for the 7th, or both for the m7. To change any of them, use the Chords page (SEL).</td></tr>
 <tr><th scope="row">PLAY · REC</th><td>PLAY starts and stops the rhythm. REC turns on sync start, so the rhythm waits for your first chord.</td></tr>
 <tr><th scope="row">ARP</th><td>Turns on chord hold, so the chord keeps playing after you let go.</td></tr>
@@ -120,7 +120,7 @@ X0X, and the installer can always put M-VAVE's own firmware back. Install at you
   <li>The Rhythm page (<b>SEQ</b>) has Rhythm, Tempo, Drums level and Auto bass. With Auto bass on, the bass and chord play in time with the rhythm.</li>
   <li>The Sound page (<b>FX</b>) has Reverb, how much of the strings go to the reverb; Space, the plate's size; Width; and Chord rev, how much of the chord and bass go to the reverb. The drums stay dry.</li>
   <li>On the Chords page (<b>SEL</b>), you can change the chord on any black key. Press the key, then turn Root (KNOB 1) and Type (KNOB 2). KNOB 3 and 4 set Transpose and Octave.</li>
-  <li>The Setup page (<b>GLO</b>) has Tune, MIDI out and Lights. With Lights on, the keys light up and the unlit buttons glow dimly so you can find them. With Keys, only the keys light. Off turns the lights off.</li>
+  <li>The Setup page (<b>GLO</b>) has Tune, MIDI out, Lights and Strings. With Lights on, the keys light up and the unlit buttons glow dimly so you can find them. With Keys, only the keys light. Off turns the lights off. Strings sets what ringing strings do when you change chords. With Ring, they keep their notes. With Follow, they move to the new chord's notes and keep ringing, as on the Omnichord.</li>
 </ul>
 <h2>MIDI</h2>
 <p>MIDI comes in over USB and the TRS jack, and goes out over USB. The FM-1's jack is input only.</p>

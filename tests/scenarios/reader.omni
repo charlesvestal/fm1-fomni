@@ -16,6 +16,12 @@ said Setup page: Tune 0
 spin K1 3
 wait 300
 said Tune +3
+spin K4 1
+wait 300
+said Strings Follow
+spin K4 -1
+wait 300
+said Strings Ring
 # the encoders
 turn SELECT 2 200
 wait 300

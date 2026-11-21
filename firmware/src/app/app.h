@@ -20,7 +20,9 @@ typedef struct {
     uint8_t hold;                        /* CHORD HOLD: the chord keeps playing after its button is let go */
     uint8_t sync;                        /* SYNC START: the rhythm starts with the first chord */
     uint8_t leds;                        /* lights: 0 off, 1 keys and the buttons' glow, 2 keys only */
-    uint8_t rsv[13];                     /* room to grow: an older, shorter project loads (zeros here) */
+    uint8_t strings;                     /* on a chord change, strings still ringing: 0 Ring (keep their notes),
+                                          * 1 Follow (go on at the new chord's) */
+    uint8_t rsv[12];                     /* room to grow: an older, shorter project loads (zeros here) */
 } project_t;
 
 extern project_t proj;

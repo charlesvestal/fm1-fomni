@@ -100,5 +100,15 @@ expect padroot10 7
 expect par12 2
 expect sync 1
 shot after_reboot.png
+# Setup's Strings: Ring at first, Follow after SAVE comes back after a restart
+expect strings 0
+tap GLO
+spin K4 1
+expect strings 1
+shot setup_strings.png
+tap SAVE
+reboot
+wait 100
+expect strings 1
 # Chord rev comes back at its default
 expect par11 25

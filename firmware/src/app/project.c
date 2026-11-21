@@ -41,6 +41,8 @@ static int project_valid(void)
     for (i = 0; i < NPADS; i++)
         if (proj.pad_root[i] > 11u || proj.pad_type[i] >= CH_NTYPES)
             return 0;
+    if (proj.strings > 1u)                       /* (a project from before Strings has 0 here: Ring) */
+        proj.strings = 0;
     return 1;
 }
 
@@ -62,4 +64,5 @@ void project_apply(void)
     int i;
     for (i = 0; i < P_NPARAMS; i++)
         om_set(i, proj.par[i]);
+    om_strings(proj.strings);
 }

@@ -62,6 +62,8 @@ void om_gate(int on);                          /* a chord pad held (1) / release
 void om_strum(int string);                     /* pluck string 0..15 */
 void om_play(int on);                          /* the rhythm: start (from its first step) / stop */
 void om_panic(void);                           /* everything quiet, now */
+void om_strings(int follow);                   /* on a chord change, strings still ringing keep their notes (0,
+                                                * Ring) or go on at the new chord's (1, Follow: the OM-84's legato) */
 /* MIDI clock in (the main loop passes it on): OM_CLK_TICK (F8), START, CONTINUE, STOP. While ticks keep
  * coming (the last within ~0.6 s) they drive the rhythm, 6 a step, and its own tempo stands aside;
  * otherwise the rhythm sends clock (24 a quarter note) and start / stop, with MIDI out on. */

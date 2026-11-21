@@ -22,7 +22,7 @@ firmware back, and an FM-1 that keeps crashing starts in a safe mode.
 
 | | |
 |---|---|
-| White keys | The strum plate. Each key plucks one string of the chord. As on the Omnichord, each group of three keys is root, third and fifth, five groups up, folded into an F#–F window, with one more root on top. |
+| White keys | The strum plate. Each key plucks one string of the chord. As on the Omnichord, each group of three keys is root, third and fifth, five groups up, folded into an F#–F window, with one more root on top. When you change chords, strings that are still ringing move to the new chord's notes, as on the Omnichord. |
 | Black keys | The chord buttons, F C G, Dm Am, Em G7 E7, D7 Bb and A7 at first. Hold **ENV** for the minor, **LFO** for the 7th, or both for the m7, like the Omnichord's three rows. |
 | PLAY | Starts and stops the rhythm. |
 | REC | Turns on SYNC START, so the rhythm waits for your first chord. |

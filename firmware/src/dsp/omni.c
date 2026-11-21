@@ -164,11 +164,20 @@ static void midi(uint32_t st, uint32_t d1, uint32_t d2)
         om_midi_out(st, d1, d2);
 }
 
+/* a string's note: its pitch and its filter (Chordian's per-note brightness, darker as the note decays) */
+static void str_note(str_t *v, int n)
+{
+    float u = fm_exp2f((float)(n - 69) * (1.0f / 12.0f)) * tunefac,
+          base = fm_maxf(((18.0f - u) / 18.0f) * 0.31f + 0.34f, 0.05f);
+    v->note = (uint8_t)n;
+    v->inc = note_inc(n);
+    v->k = fm_powf(base, 2.85f);
+}
+
 static void strum(int s)
 {
     str_t *v = &str[s];
     int n = harp_n[s];
-    float u = fm_exp2f((float)(n - 69) * (1.0f / 12.0f)) * tunefac, base;
     if (v->on && v->note != n)
         midi(0x80, v->note, 0);
     if (v->on)
@@ -179,12 +188,8 @@ static void strum(int s)
         v->g = 0.0f;
     }
     v->on = 1;
-    v->note = (uint8_t)n;
-    v->inc = note_inc(n);
+    str_note(v, n);
     v->v = 1.0f;
-    /* the voice filter: Chordian's per-note brightness, darker as the note decays */
-    base = fm_maxf(((18.0f - u) / 18.0f) * 0.31f + 0.34f, 0.05f);
-    v->k = fm_powf(base, 2.85f);
     {   /* the shimmer: less on the higher strings; each string its own phase (Chordian's offsets) */
         int i = s * 12 / 15;
         v->modamt = 1.0f - (float)i / 17.0f;
@@ -243,13 +248,22 @@ static void bass_cmd(char c, char which)
     }
 }
 
-/* the chord changed: what sounds moves to it (the OM's chord and bass follow the buttons) */
+/* the chord changed: what sounds moves to it (the OM's chord and bass follow the buttons, and so do the
+ * strings still ringing: each glides on, legato, at the new chord's note for its place on the plate) */
 static void retune(void)
 {
     int i;
     om_voicing(root, type, par[P_TRANSPOSE], par[P_OCTAVE], harp_n, chord_n, &bass_n);
-    for (i = 0; i < OM_NSTR; i++)                 /* what each string plays when plucked next */
+    for (i = 0; i < OM_NSTR; i++) {
+        str_t *v = &str[i];
         om_str_note[i] = harp_n[i];
+        if (v->on && v->v > 0.0f && v->note != harp_n[i]) {   /* (a string in its last fade just ends) */
+            int vel = (int)(v->v * 100.0f);
+            midi(0x80, v->note, 0);
+            str_note(v, harp_n[i]);
+            midi(0x90, harp_n[i], (uint32_t)(vel < 1 ? 1 : vel));
+        }
+    }
     for (i = 0; i < OM_NCHORD; i++)
         if (chv[i].st != E_OFF && chv[i].note != chord_n[i]) {
             midi(0x81, chv[i].note, 0);

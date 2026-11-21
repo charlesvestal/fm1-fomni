@@ -101,7 +101,7 @@ X0X, and the installer can always put M-VAVE's own firmware back. Install at you
 
 <h2 id="playing">Playing</h2>
 <table aria-labelledby="playing">
-<tr><th scope="row">White keys</th><td>The strum plate. Each key plucks one string of the chord. As on the Omnichord, the keys go root, third and fifth, five times up, folded into an F#–F window, with one more root on top.</td></tr>
+<tr><th scope="row">White keys</th><td>The strum plate. Each key plucks one string of the chord. As on the Omnichord, the keys go root, third and fifth, five times up, folded into an F#–F window, with one more root on top. When you change chords, strings that are still ringing move to the new chord's notes, as on the Omnichord.</td></tr>
 <tr><th scope="row">Black keys</th><td>The chord buttons: F C G, Dm Am, Em G7 E7, D7 Bb, A7. Hold ENV for the minor, LFO for the 7th, or both for the m7. To change any of them, use the Chords page (SEL).</td></tr>
 <tr><th scope="row">PLAY · REC</th><td>PLAY starts and stops the rhythm. REC turns on sync start, so the rhythm waits for your first chord.</td></tr>
 <tr><th scope="row">ARP</th><td>Turns on chord hold, so the chord keeps playing after you let go.</td></tr>

@@ -110,7 +110,7 @@ X0X, and the installer can always put M-VAVE's own firmware back. Install at you
 <tr><th scope="row">ALGORITHM</th><td>Picks the rhythm.</td></tr>
 <tr><th scope="row">PRESETS</th><td>Transposes, from −6 to +6.</td></tr>
 <tr><th scope="row">KNOB 1–4</th><td>Set the four values on the screen. The pages below list them.</td></tr>
-<tr><th scope="row">SAVE</th><td>Saves. FoMni-1 also saves by itself a few seconds after a change, once it's quiet.</td></tr>
+<tr><th scope="row">SAVE</th><td>Saves your chords and settings. Until you save, a dot at the top of the screen shows there are changes, and switching off goes back to what you saved last.</td></tr>
 </table>
 
 <h2>The pages</h2>

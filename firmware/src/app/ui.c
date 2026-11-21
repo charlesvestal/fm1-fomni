@@ -8,7 +8,7 @@
  *   REC            SYNC START          ARP   CHORD HOLD          OCT- / OCT+   the plate's octave
  *   HOME SEQ FX SEL GLO   the pages: PLAY, RHYTHM, SOUND, CHORDS, SETUP (EDIT steps through them)
  *   SELECT tempo   ALGORITHM rhythm   PRESETS transpose   KNOB 1-4 the page's four values
- *   SAVE           saves (it also saves by itself, a few seconds after a change, when quiet) */
+ *   SAVE           saves (nothing else does: a dot in the header shows unsaved changes) */
 
 enum { V_PLAY, V_RHYTHM, V_SOUND, V_PADS, V_SETUP, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Play", "Rhythm", "Sound", "Chords", "Setup"};
@@ -50,7 +50,6 @@ static struct {
     uint8_t root, type;                /* the chord (before transpose) */
     uint8_t armed;                     /* SYNC START waiting for a chord */
     uint8_t dirty;                     /* the project changed since the last save */
-    uint32_t act_t, saved_t;
     char msg[2][24];
     uint32_t msg_until;
     int8_t touched;                    /* the knob turned last (0..3), shown bright for a moment */
@@ -469,8 +468,6 @@ static void input(void)
             else
                 pad_up((int)i);
         }
-    if (btn || keys || ch)
-        ui.act_t = plat_ms();
     midi_in();
     if ((e = plat_enc(EN_SELECT)) != 0)
         turn(EN_SELECT, P_TEMPO, e);
@@ -483,7 +480,6 @@ static void input(void)
             turn(EN_K1 + (int)i, VIEW_KNOB[ui.view][i], e);
             ui.touched = (int8_t)i;
             ui.touch_until = plat_ms() + 1200u;
-            ui.act_t = plat_ms();
         }
 }
 
@@ -766,24 +762,6 @@ static void leds(void)
     plat_leds(b, k);
 }
 
-/* AUTOSAVE: a few seconds after a change, when nothing sounds and nothing is touched (a flash erase
- * silences the audio for a moment) */
-#define AUTOSAVE_QUIET 4000u
-static void autosave(void)
-{
-    uint32_t now = plat_ms(), i;
-    if (!ui.dirty || om_playing || ui.btn || ui.keys || now - ui.act_t < AUTOSAVE_QUIET || om_chord_level > 0.0f ||
-        om_bass_level > 0.0f)
-        return;
-    for (i = 0; i < OM_NSTR; i++)
-        if (om_str_level[i] > 0.0f)
-            return;
-    if (project_save() == 0) {
-        ui.dirty = 0;
-        ui.saved_t = now;
-    }
-}
-
 /* ------------------------------------------------------ screen reader --- */
 /* The screen as text for a screen reader on the computer (announce.c; fm1-reader): a page once it settles,
  * with its knobs; a knob's value as it turns; the chord a button (or MIDI) plays; play and stop; what a
@@ -1021,7 +999,6 @@ void ui_init(void)
 void ui_frame(void)
 {
     input();
-    autosave();
     draw_header();
     draw_main();
     draw_knobs();

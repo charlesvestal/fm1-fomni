@@ -32,7 +32,7 @@ firmware back, and an FM-1 that keeps crashing starts in a safe mode.
 | ALGORITHM | Picks the rhythm. |
 | PRESETS | Transposes, from −6 to +6. |
 | KNOB 1–4 | Set the four values on the screen. The pages below list them. |
-| SAVE | Saves. FoMni also saves by itself a few seconds after a change, once it's quiet. |
+| SAVE | Saves your chords and settings. Until you save, a dot at the top of the screen shows there are changes, and switching off goes back to what you saved last. |
 
 ### The pages
 

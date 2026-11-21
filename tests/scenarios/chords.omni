@@ -76,8 +76,23 @@ spin K2 -2
 expect padroot10 7
 expect padtype10 0
 shot chords.png
-# it saves by itself when quiet, and comes back after a restart
+# it never saves by itself: a restart brings back what was saved last
 wait 5000
+expect dirty 1
+expect store_writes 0
+reboot
+wait 100
+expect padroot10 9
+expect par12 0
+expect sync 0
+# the same changes again, then SAVE: they come back after a restart
+tap REC
+turn PRESET 2
+tap SEL
+tapkey b10
+spin K1 -2
+spin K2 -2
+tap SAVE
 expect dirty 0
 reboot
 wait 100

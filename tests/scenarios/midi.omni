@@ -58,3 +58,33 @@ tap PLAY
 wait 500
 tap PLAY
 expect clocks_out >20
+# channel 3: the FM-1's keys (F3 = key 0). Black key 1 (F#3) holds the first chord button (F)
+wait 50
+expect playing 0
+midi 92 36 64
+wait 20
+expect pad 0
+expect root 5
+expect chord_level >50
+# a second note on changes nothing; its note off lets go
+midi 92 36 64
+midi 82 36 00
+wait 400
+expect pad -1
+expect chord_level 0
+# black key 2 (G#3, the C button), then white key 3 (B3) plucks string 3 of C
+midi 92 38 64
+wait 20
+expect root 0
+midi 92 3B 64
+wait 20
+expect strlevel3 >50
+midi 82 3B 00
+# a note on with velocity 0 is a note off
+midi 92 38 00
+wait 400
+expect pad -1
+# outside F3..G5: nothing
+midi 92 30 64
+wait 20
+expect pad -1

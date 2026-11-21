@@ -57,6 +57,8 @@ MIDI comes in over USB and the TRS jack, and goes out over USB. The FM-1's jack 
 
 - Notes coming in on channel 1 pluck the nearest string.
 - Play a chord on a keyboard on channel 2, and it becomes the chord, as if you'd pressed a black key.
+- Notes on channel 3 work like the FM-1's own keys, from F3 to G5: a white key's note plucks its string, and a black
+  key's note holds its chord button until the note ends. A foot controller can change the chords this way.
 - When MIDI clock comes in, the rhythm follows it, along with start and stop. The screen shows EXT for the tempo.
 - MIDI out is on by default, and you can turn it off on the Setup page. The strings go out on channel 1, the
   chord on 2, the bass on 3 and the drums on 10. When the rhythm runs on its own tempo, FoMni also sends clock,

@@ -403,14 +403,44 @@ static void kb_update(void)
     }
 }
 
+/* channel 3: the FM-1's own keys, F3..G5 (key 0 is F3): a white key's note plucks its string, a black
+ * key's note presses its chord button until its note off (a foot controller changes the chords) */
+#define MIDI_KEY0 53
+static uint32_t midi_keys;                       /* the keys channel 3 holds down */
+static void midi_key(uint32_t n, int down)
+{
+    int k = (int)n - MIDI_KEY0, i;
+    uint32_t m;
+    if (k < 0 || k >= NKEYS)
+        return;
+    m = 1u << k;
+    if (down == !!(midi_keys & m))
+        return;                                  /* a second note on, or an off for a key not held */
+    midi_keys ^= m;
+    for (i = 0; i < OM_NSTR; i++)
+        if (WHITE_K[i] == k && down)
+            om_strum(i);
+    for (i = 0; i < NPADS; i++)
+        if (BLACK_K[i] == k) {
+            if (down)
+                pad_down(i);
+            else
+                pad_up(i);
+        }
+}
+
 /* MIDI in (USB and the TRS jack): channel 1 notes pluck the nearest string, channel 2 notes pick the
- * chord, clock and start / stop drive the rhythm */
+ * chord, channel 3 notes are the FM-1's keys, clock and start / stop drive the rhythm */
 static void midi_in(void)
 {
     uint32_t pkt;
     int chords = 0;
     while (plat_midi_in(&pkt)) {
         uint32_t st = (pkt >> 8) & 0xFFu, n = (pkt >> 16) & 0x7Fu, v = pkt >> 24;
+        if (st == 0x92u || st == 0x82u) {
+            midi_key(n, st == 0x92u && v);
+            continue;
+        }
         if (st == 0xF8u || st == 0xFAu || st == 0xFBu || st == 0xFCu) {
             om_clock(st == 0xF8u ? OM_CLK_TICK : st == 0xFAu ? OM_CLK_START : st == 0xFBu ? OM_CLK_CONTINUE : OM_CLK_STOP);
             if (st == 0xFAu)
